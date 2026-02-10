@@ -61,14 +61,20 @@ module.exports = function (app) {
   app.setMiddleware("/users", require("./middlewares/authMock"));
 
   // Define RESTful routes for a resource
+  // Recursive Nested Routing
   app.apiRoute("users", {
-    get: usersController.getUsers,       // GET /users
-    post: usersController.createUser,    // POST /users
+    get: usersController.list,
+    post: usersController.create,
+    
+    // Nested parameter: /users/:id
     "/:id": {
-      get: usersController.getUserById,  // GET /users/:id
-      put: usersController.updateUser,   // PUT /users/:id
-      delete: usersController.deleteUser // DELETE /users/:id
-    },
+      get: usersController.get,
+      
+      // Nested resource: /users/:id/posts
+      "/posts": {
+        get: usersController.posts
+      }
+    }
   });
 };
 ```

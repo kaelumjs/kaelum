@@ -49,16 +49,28 @@ Handles routing logic. Since Kaelum is agnostic to template engines, you can sim
 ```js
 const path = require("path");
 
+const pages = require("./controllers/pagesController");
+const auth = require("./middlewares/auth");
+
 module.exports = function (app) {
-  app.addRoute("/", {
-    get: (req, res) => {
-      // Send a raw HTML file
-      res.sendFile(path.join(process.cwd(), "views", "index.html"));
-    },
+  app.addRoute("/", pages.home);
+
+  // Nested Route
+  app.addRoute("/about", {
+    get: pages.about,
+    "/team": {
+        get: pages.team
+     }
   });
 
-  app.addRoute("/about", {
-    get: (req, res) => res.send("<h1>About Page</h1>"),
+  // Middleware Chain
+  const secure = [auth];
+
+  app.addRoute("/dashboard", {
+    get: [...secure, pages.dashboard],
+    "/settings": {
+        get: [...secure, pages.settings]
+    }
   });
 };
 ```

@@ -100,7 +100,7 @@ my-web-app/
 ├── views/           # html templates
 │   └── index.html
 ├── controllers/
-│   └── .gitkeep
+│   └── pagesController.js
 ├── middlewares/
 │   └── .gitkeep
 ├── routes.js
