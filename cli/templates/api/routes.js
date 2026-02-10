@@ -1,34 +1,33 @@
-// routes.js - registers API endpoints using app.apiRoute
-const {
-  getUsers,
-  createUser,
-  getUserById,
-  updateUser,
-  deleteUser,
-} = require("./controllers/usersController");
-
+// routes.js
+const users = require("./controllers/usersController");
 const auth = require("./middlewares/authMock");
 
-module.exports = function (app) {
-  // Global example: apply auth middleware on /users POST (create)
-  // also demonstrate per-path middleware usage via setMiddleware(path, middleware)
+module.exports = (app) => {
+  // Global middleware for /users path
   app.setMiddleware("/users", (req, res, next) => {
-    // a small wrapper to demonstrate both setMiddleware signature and route-level control
-    // allow GET without auth, require auth for POST/PUT/DELETE by checking method
-    if (["POST", "PUT", "DELETE"].includes(req.method)) {
-      return require("./middlewares/authMock")(req, res, next);
-    }
+    // Simple method check
+    if (req.method === "POST") return auth(req, res, next);
     next();
   });
 
-  // Resource routes using apiRoute
+  // Recursive Nested Routing Example
   app.apiRoute("users", {
-    get: getUsers,
-    post: createUser,
+    get: users.list,   // GET /users
+    post: users.create, // POST /users (protected by middleware above)
+
+    // Nested parameter: /users/:id
     "/:id": {
-      get: getUserById,
-      put: updateUser,
-      delete: deleteUser,
+      get: users.get, // GET /users/:id
+
+      // Nested resource: /users/:id/posts
+      "/posts": {
+        get: users.posts, // GET /users/:id/posts
+      },
     },
+  });
+
+  // Metadata endpoint
+  app.addRoute("/meta", {
+    get: (req, res) => res.json({ version: "1.4.2", framework: "Kaelum" }),
   });
 };

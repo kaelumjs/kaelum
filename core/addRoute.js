@@ -114,26 +114,9 @@ function addRoute(app, basePath, handlers = {}) {
         continue;
       }
 
-      // If nested value is object -> iterate methods
+      // If nested value is object -> RECURSE
       if (isPlainObject(value)) {
-        for (const method of Object.keys(value)) {
-          const handlerFn = value[method];
-          const m = method.toLowerCase();
-          if (!supportedMethods.includes(m)) {
-            throw new Error(
-              `Unsupported HTTP method "${method}" for route "${subPath}"`
-            );
-          }
-          // allow single function or array for handlerFn
-          if (typeof handlerFn !== "function" && !Array.isArray(handlerFn)) {
-            throw new Error(
-              `Handler for ${method} ${subPath} must be a function or array of functions`
-            );
-          }
-          const fns = normalizeHandlersToArray(handlerFn);
-          const wrapped = fns.map(wrapHandler);
-          app[m](subPath, ...wrapped);
-        }
+        addRoute(app, subPath, value);
         continue;
       }
 

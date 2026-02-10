@@ -1,32 +1,34 @@
-// routes.js - example route declarations using Kaelum API
-const path = require("path");
+// routes.js
+const pages = require("./controllers/pagesController");
+const logger = require("./middlewares/logger");
 
-module.exports = function (app) {
-  // Home: serve the index.html from /views
-  app.addRoute("/", {
-    get: (req, res) => {
-      // send the static HTML file from the views folder
-      res.sendFile(path.join(process.cwd(), "views", "index.html"));
-    },
-  });
+// Mock auth middleware
+const auth = (req, res, next) => {
+  // Simulate auth check
+  req.user = "Admin"; 
+  next();
+};
 
-  // About page - simple text
+module.exports = (app) => {
+  // Home
+  app.addRoute("/", pages.home);
+
+  // Nested Route Example: /about and /about/team
   app.addRoute("/about", {
-    get: (req, res) => {
-      res.send("About Kaelum — a minimal framework scaffolded by the CLI.");
+    get: pages.about,
+    "/team": {
+      get: pages.team,
     },
   });
 
-  // Example route using per-path middleware (logger)
-  // The middleware is mounted on '/protected' and the route uses it.
-  const logger = require("./middlewares/logger");
-  app.setMiddleware("/protected", logger);
+  // Middleware Chain Example
+  const secureSection = [logger, auth];
 
-  app.addRoute("/protected", {
-    get: (req, res) => {
-      res.send(
-        "This route is protected by a simple request logger middleware."
-      );
+  // Dashboard with nested settings, protected by middleware chain
+  app.addRoute("/dashboard", {
+    get: [...secureSection, pages.dashboard],
+    "/settings": {
+      get: [...secureSection, pages.settings],
     },
   });
 };

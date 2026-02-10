@@ -74,7 +74,7 @@ my-web-app/
 ├── views/           # HTML templates
 │   └── index.html
 ├── controllers/     # Controller logic (MVC)
-│   └── .gitkeep
+│   └── pagesController.js
 ├── middlewares/     # Custom middlewares
 │   └── logger.js
 ├── routes.js        # Route definitions (example uses Kaelum helpers)
@@ -147,7 +147,7 @@ app.addRoute("/home", {
   post: (req, res) => res.send("Posted!"),
 });
 
-// apiRoute builds RESTy resources with nested subpaths:
+// apiRoute builds RESTy resources with recursive nested subpaths:
 app.apiRoute("users", {
   get: listUsers,
   post: createUser,
@@ -155,6 +155,9 @@ app.apiRoute("users", {
     get: getUserById,
     put: updateUser,
     delete: deleteUser,
+    "/posts": {
+      get: getUserPosts // GET /users/:id/posts
+    }
   },
 });
 ```
