@@ -1,16 +1,19 @@
 {
   "name": "kaelum",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "A minimalist Node.js framework for building web pages and APIs with simplicity and speed.",
   "main": "index.js",
   "exports": {
-    ".": "./index.js"
+    ".": {
+      "import": "./index.mjs",
+      "require": "./index.js"
+    }
   },
   "bin": {
     "kaelum": "cli/index.js"
   },
   "scripts": {
-    "test": "jest --verbose"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose"
   },
   "keywords": [
     "framework",
