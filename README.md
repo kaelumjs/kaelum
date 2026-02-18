@@ -99,12 +99,17 @@ my-api-app/
 
 ## 🧩 Core API
 
-> Kaelum exposes a factory — use `require('kaelum')` and call it to get an app instance:
-
-```js
-const kaelum = require("kaelum");
-const app = kaelum();
-```
+> Kaelum exposes a factory — use `require` (CommonJS) or `import` (ESM) to get an app instance:
+ 
+ ```js
+ // CommonJS
+ const kaelum = require("kaelum");
+ const app = kaelum();
+ 
+ // ESM
+ import kaelum from "kaelum";
+ const app = kaelum();
+ ```
 
 ### `app.setConfig(options)`
 
