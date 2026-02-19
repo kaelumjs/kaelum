@@ -12,12 +12,12 @@ export default defineConfig({
   title: "Kaelum",
   description: "Kaelum — Fast, minimalist framework for web apps & REST APIs",
   head: [
-    ["link", { rel: "icon", href: "/favicon.png" }],
+    ["link", { rel: "icon", href: "/kaelum/favicon.png" }],
     ["meta", { name: "theme-color", content: "#3ea0ff" }],
-    ["meta", { name: "author", content: "Matheus Campagnolo" }],
+    ["meta", { name: "author", content: "Matheus Messias" }],
   ],
   themeConfig: {
-    logo: "/logo.svg",
+    logo: { light: "/logo-black.svg", dark: "/logo-white.svg" },
     nav: [
       { text: "Home", link: "/" },
       { text: "Introduction", link: "/getting-started" },
