@@ -2,7 +2,7 @@
 
 This page collects the most common runtime and configuration errors users encounter when installing or using Kaelum-based projects, explains why they occur and gives actionable fixes. The guidance is targeted at users creating apps with Kaelum templates (web/API). If you are contributing to the Kaelum source repository or testing locally, see the final section for a small note about `npm link`.
 
-Still having issues? Try asking for help on the [GitHub Discussions](https://github.com/MatheusCampagnolo/kaelum/discussions) page
+Still having issues? Try asking for help on the [GitHub Discussions](https://github.com/kaelumjs/kaelum/discussions) page
 
 ## Config
 

@@ -11,7 +11,7 @@ hero:
       link: /getting-started
     - theme: alt
       text: View on GitHub
-      link: https://github.com/MatheusCampagnolo/kaelum
+      link: https://github.com/kaelumjs/kaelum
 
 features:
   - title: Web Applications

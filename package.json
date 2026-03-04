@@ -30,6 +30,14 @@
   ],
   "author": "Matheus Campagnolo",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kaelumjs/kaelum.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kaelumjs/kaelum/issues"
+  },
+  "homepage": "https://github.com/kaelumjs/kaelum#readme",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",

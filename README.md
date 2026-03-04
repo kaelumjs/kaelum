@@ -3,7 +3,7 @@
 <h1>Kaelum</h1>
 
 [![npm version](https://img.shields.io/npm/v/kaelum)](https://www.npmjs.com/package/kaelum)
-[![Build Status](https://github.com/MatheusCampagnolo/kaelum/actions/workflows/deploy-docs.yml/badge.svg)](https://github.com/MatheusCampagnolo/kaelum/actions)
+[![Build Status](https://github.com/kaelumjs/kaelum/actions/workflows/deploy-docs.yml/badge.svg)](https://github.com/kaelumjs/kaelum/actions)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Docs](https://img.shields.io/badge/docs-online-blue)](https://matheuscampagnolo.github.io/kaelum/)
 
@@ -231,7 +231,7 @@ This checks core functionality including `setConfig`, routes, and error handlers
 ## 🔧 Local development & contributing
 
 ```bash
-git clone https://github.com/MatheusCampagnolo/kaelum.git
+git clone https://github.com/kaelumjs/kaelum.git
 cd kaelum
 npm install
 npm link
@@ -263,7 +263,7 @@ npx kaelum create my-test --template web
 
 ## 📚 Links
 
-- [GitHub](https://github.com/MatheusCampagnolo/kaelum)
+- [GitHub](https://github.com/kaelumjs/kaelum)
 - [npm](https://www.npmjs.com/package/kaelum)
 - [Documentation](https://matheuscampagnolo.github.io/kaelum/)
 

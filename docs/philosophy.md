@@ -152,4 +152,4 @@ All of these are subject to prioritization by contributors and the community.
 * [Getting Started](/getting-started) — practical bootstrapping and first steps.
 * [Guide: Features](/guides/features) — detailed behavior and examples for Kaelum helpers.
 * [API Reference](/api/start) — function reference for `start`, `addRoute`, `setConfig`, etc.
-* GitHub repository: `https://github.com/MatheusCampagnolo/kaelum`
+* GitHub repository: `https://github.com/kaelumjs/kaelum`

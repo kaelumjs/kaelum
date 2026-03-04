@@ -78,7 +78,7 @@ export default defineConfig({
 
     // Social / repo links
     socialLinks: [
-      { icon: "github", link: "https://github.com/MatheusCampagnolo/kaelum" },
+      { icon: "github", link: "https://github.com/kaelumjs/kaelum" },
       { icon: "npm", link: "https://www.npmjs.com/package/kaelum" },
     ],
 
@@ -91,7 +91,7 @@ export default defineConfig({
     // edit link template
     editLink: {
       pattern:
-        "https://github.com/MatheusCampagnolo/kaelum/edit/main/docs/:path",
+        "https://github.com/kaelumjs/kaelum/edit/main/docs/:path",
       text: "Edit this page on GitHub",
     },
   },

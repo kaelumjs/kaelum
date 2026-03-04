@@ -137,4 +137,4 @@ Kaelum’s mission is pragmatic: provide a small, well-documented foundation tha
 * [Philosophy](/philosophy) — design principles and community goals.
 * Express: [https://expressjs.com/](https://expressjs.com/)
 * Create React App inspiration: [https://create-react-app.dev/](https://create-react-app.dev/)
-* GitHub repo: `https://github.com/MatheusCampagnolo/kaelum`
+* GitHub repo: `https://github.com/kaelumjs/kaelum`
