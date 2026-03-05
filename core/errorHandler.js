@@ -111,18 +111,26 @@ function errorHandlerFactory(options = {}) {
     if (req && req.accepts && req.accepts("html") && !req.accepts("json")) {
       // simple HTML response for browsers preferring HTML
       const title = `Error ${status}`;
+      // sanitize to prevent XSS when injecting into HTML
+      const escapeHtml = (str) =>
+        String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      const safeMessage = escapeHtml(payload.error.message);
+      const safeStack =
+        exposeStack && payload.error.stack
+          ? `<pre>${escapeHtml(payload.error.stack)}</pre>`
+          : "";
       const body = `
         <!doctype html>
         <html>
           <head><meta charset="utf-8"/><title>${title}</title></head>
           <body>
             <h1>${title}</h1>
-            <p>${payload.error.message}</p>
-            ${
-              exposeStack && payload.error.stack
-                ? `<pre>${payload.error.stack}</pre>`
-                : ""
-            }
+            <p>${safeMessage}</p>
+            ${safeStack}
           </body>
         </html>`;
       res.status(status).type("html").send(body);

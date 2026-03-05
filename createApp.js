@@ -18,6 +18,7 @@ const coreSetConfig = require("./core/setConfig");
 const { errorHandler } = require("./core/errorHandler");
 const registerHealth = require("./core/healthCheck");
 const redirect = require("./core/redirect");
+const { removeMiddlewareByFn } = require("./core/utils");
 
 function createApp() {
   const app = express();
@@ -99,18 +100,7 @@ function createApp() {
   // middleware utility helpers
   // ---------------------------
 
-  // remove middleware by matching the function reference from the express internal stack
-  function removeMiddlewareByFn(appInstance, fn) {
-    if (
-      !appInstance ||
-      !appInstance._router ||
-      !Array.isArray(appInstance._router.stack)
-    )
-      return;
-    appInstance._router.stack = appInstance._router.stack.filter(
-      (layer) => layer.handle !== fn
-    );
-  }
+  // removeMiddlewareByFn imported from core/utils.js
 
   // ---------------------------
   // bind existing core helpers to the app

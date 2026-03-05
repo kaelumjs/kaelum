@@ -5,6 +5,7 @@
 // - Keeps references to Kaelum-installed middleware so toggles (false) remove them.
 
 const path = require("path");
+const { removeMiddlewareByFn } = require("./utils");
 
 function tryRequire(name) {
   try {
@@ -27,15 +28,7 @@ function persistConfig(app, options = {}) {
   return merged;
 }
 
-/**
- * Remove a middleware function reference from express stack
- * @param {Object} app
- * @param {Function} fn
- */
-function removeMiddlewareByFn(app, fn) {
-  if (!app || !app._router || !Array.isArray(app._router.stack)) return;
-  app._router.stack = app._router.stack.filter((layer) => layer.handle !== fn);
-}
+// removeMiddlewareByFn imported from ./utils.js
 
 /**
  * Remove static middleware previously installed by Kaelum (if any)

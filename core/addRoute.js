@@ -58,7 +58,6 @@ function wrapHandler(fn) {
  * @returns {string}
  */
 function joinPaths(basePath, key) {
-  if (!basePath.endsWith("/")) basePath = basePath;
   // remove trailing slash from basePath (except if basePath === '/')
   if (basePath !== "/" && basePath.endsWith("/")) {
     basePath = basePath.slice(0, -1);
