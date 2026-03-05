@@ -14,8 +14,14 @@
   },
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose",
+    "lint": "eslint .",
+    "format": "prettier --write .",
     "release": "standard-version",
     "changelog": "standard-version --skip.bump --skip.tag --skip.commit"
+  },
+  "funding": {
+    "type": "ko-fi",
+    "url": "https://ko-fi.com/matheusmessias"
   },
   "keywords": [
     "framework",
@@ -49,7 +55,10 @@
     "morgan": "^1.10.1"
   },
   "devDependencies": {
+    "eslint": "^10.0.2",
+    "eslint-config-prettier": "^10.1.8",
     "jest": "^30.2.0",
+    "prettier": "^3.8.1",
     "standard-version": "^9.5.0",
     "supertest": "^7.2.2"
   }
