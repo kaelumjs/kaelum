@@ -231,9 +231,9 @@ npm run format  # format code with Prettier
 
 ## 🤝 Contributing
 
-We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) before submitting a PR.
+We welcome contributions! Please read our [Contributing Guide](https://github.com/kaelumjs/.github/blob/main/CONTRIBUTING.md) before submitting a PR.
 
-See also: [Code of Conduct](CODE_OF_CONDUCT.md) · [Security Policy](SECURITY.md)
+See also: [Code of Conduct](https://github.com/kaelumjs/.github/blob/main/CODE_OF_CONDUCT.md) · [Security Policy](https://github.com/kaelumjs/.github/blob/main/SECURITY.md)
 
 ---
 
