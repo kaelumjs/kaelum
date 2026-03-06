@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/public/logo-black.svg" alt="Kaelum" width="120" />
+<img src=".github/logo.svg" alt="Kaelum" width="120" />
 
 <h1>Kaelum</h1>
 

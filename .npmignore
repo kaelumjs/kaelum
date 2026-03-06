@@ -1,23 +1,14 @@
-# Exclude development and test folders
-__tests__/
+# Development and test files
 test/
 coverage/
 
-# Ignore logs and local environment
+# Logs and local environment
 *.log
 .env
 
-# Docs and examples
-docs/
-examples/
-
-# Ignore system files
+# System files
 .DS_Store
 Thumbs.db
 
-# Exclude docs and vitepress files from published NPM package
-docs/
-.vitepress/
-docs-dist/
-
-.github
+# GitHub and repo files
+.github/
