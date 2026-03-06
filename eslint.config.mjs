@@ -33,7 +33,6 @@ export default [
   {
     ignores: [
       "node_modules/",
-      "docs/",
       "coverage/",
       "cli/templates/",
       "*.config.js",

@@ -17,9 +17,7 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "lint": "eslint .",
-    "format": "prettier --write .",
-    "release": "standard-version",
-    "changelog": "standard-version --skip.bump --skip.tag --skip.commit"
+    "format": "prettier --write ."
   },
   "funding": {
     "type": "ko-fi",
@@ -45,7 +43,7 @@
   "bugs": {
     "url": "https://github.com/kaelumjs/kaelum/issues"
   },
-  "homepage": "https://github.com/kaelumjs/kaelum#readme",
+  "homepage": "https://kaelumjs.vercel.app/",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -61,7 +59,6 @@
     "eslint-config-prettier": "^10.1.8",
     "jest": "^30.2.0",
     "prettier": "^3.8.1",
-    "standard-version": "^9.5.0",
     "supertest": "^7.2.2"
   }
 }
