@@ -19,6 +19,7 @@ const { errorHandler } = require("./core/errorHandler");
 const registerHealth = require("./core/healthCheck");
 const redirect = require("./core/redirect");
 const { removeMiddlewareByFn } = require("./core/utils");
+const { registerPlugin, getPlugins } = require("./core/plugin");
 
 function createApp() {
   const app = express();
@@ -29,6 +30,7 @@ function createApp() {
   // ensure locals object and initial persisted config
   app.locals = app.locals || {};
   app.locals.kaelumConfig = app.locals.kaelumConfig || {};
+  app.locals._kaelum_plugins = [];
   // persist baseline config so app.get("kaelum:config") is always available
   app.set("kaelum:config", app.locals.kaelumConfig);
 
@@ -168,6 +170,17 @@ function createApp() {
 
   // alias for convenience
   app.errorHandler = app.useErrorHandler;
+
+  // ---------------------------
+  // Plugin system
+  // ---------------------------
+  app.plugin = function (fn, options) {
+    return registerPlugin(app, fn, options);
+  };
+
+  app.getPlugins = function () {
+    return getPlugins(app);
+  };
 
   return app;
 }
