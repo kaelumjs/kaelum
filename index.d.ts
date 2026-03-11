@@ -53,6 +53,9 @@ interface RouteHandlers {
   [subpath: string]: any;
 }
 
+/** Plugin function signature */
+type KaelumPlugin = (app: KaelumApp, options?: Record<string, any>) => void;
+
 interface KaelumApp extends Express {
   /** Configure Kaelum features (cors, helmet, static, logs, etc.) */
   setConfig(options: KaelumConfig): KaelumConfig;
@@ -93,6 +96,12 @@ interface KaelumApp extends Express {
 
   /** Remove static file serving */
   removeStatic(): KaelumConfig;
+
+  /** Register a plugin */
+  plugin(fn: KaelumPlugin, options?: Record<string, any>): KaelumApp;
+
+  /** List registered plugin names */
+  getPlugins(): string[];
 }
 
 /**
