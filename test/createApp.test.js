@@ -15,6 +15,14 @@ describe('createApp Factory', () => {
     expect(typeof app.addRoute).toBe('function');
     expect(typeof app.apiRoute).toBe('function');
     expect(typeof app.setConfig).toBe('function');
+    expect(typeof app.close).toBe('function');
+    expect(typeof app.onShutdown).toBe('function');
+  });
+
+  test('should initialize shutdown state', () => {
+    const app = createApp();
+    expect(app.locals._kaelum_shutdown_hooks).toEqual([]);
+    expect(app.locals._kaelum_shutdown_in_progress).toBe(false);
   });
 
   test('should initialize with default config', () => {

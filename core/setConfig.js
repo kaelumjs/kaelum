@@ -257,6 +257,26 @@ function setConfig(app, options = {}) {
     }
   }
 
+  // --- Graceful Shutdown ---
+  if (options.hasOwnProperty("gracefulShutdown")) {
+    const server = app.locals && app.locals._kaelum_server;
+    if (server && server.listening) {
+      const {
+        enableGracefulShutdown,
+        removeSignalHandlers,
+      } = require("./shutdown");
+      if (options.gracefulShutdown === false) {
+        removeSignalHandlers(app);
+      } else {
+        const shutdownOpts =
+          typeof options.gracefulShutdown === "object"
+            ? options.gracefulShutdown
+            : {};
+        enableGracefulShutdown(app, shutdownOpts);
+      }
+    }
+  }
+
   // Return the full merged config for convenience
   return app.locals.kaelumConfig;
 }

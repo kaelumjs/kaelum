@@ -20,6 +20,7 @@ const registerHealth = require("./core/healthCheck");
 const redirect = require("./core/redirect");
 const { removeMiddlewareByFn } = require("./core/utils");
 const { registerPlugin, getPlugins } = require("./core/plugin");
+const { onShutdown, close } = require("./core/shutdown");
 
 function createApp() {
   const app = express();
@@ -31,6 +32,8 @@ function createApp() {
   app.locals = app.locals || {};
   app.locals.kaelumConfig = app.locals.kaelumConfig || {};
   app.locals._kaelum_plugins = [];
+  app.locals._kaelum_shutdown_hooks = [];
+  app.locals._kaelum_shutdown_in_progress = false;
   // persist baseline config so app.get("kaelum:config") is always available
   app.set("kaelum:config", app.locals.kaelumConfig);
 
@@ -180,6 +183,17 @@ function createApp() {
 
   app.getPlugins = function () {
     return getPlugins(app);
+  };
+
+  // ---------------------------
+  // Graceful shutdown
+  // ---------------------------
+  app.onShutdown = function (fn) {
+    return onShutdown(app, fn);
+  };
+
+  app.close = function (cb) {
+    return close(app, cb);
   };
 
   return app;
