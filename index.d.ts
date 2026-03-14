@@ -10,6 +10,7 @@ interface KaelumConfig {
   port?: number;
   views?: { engine?: string; path?: string };
   logger?: boolean | false;
+  gracefulShutdown?: boolean | GracefulShutdownConfig;
 }
 
 interface HealthOptions {
@@ -30,6 +31,13 @@ interface ErrorHandlerOptions {
   exposeStack?: boolean;
   logger?: ((err: Error, req: any, info?: object) => void) | false;
   onError?: (err: Error, req: any, res: any) => void;
+}
+
+interface GracefulShutdownConfig {
+  /** Timeout in milliseconds before forcing shutdown (default: 10000) */
+  timeout?: number;
+  /** Process signals to handle (default: ["SIGTERM", "SIGINT"]) */
+  signals?: string[];
 }
 
 interface RedirectEntry {
@@ -102,6 +110,13 @@ interface KaelumApp extends Express {
 
   /** List registered plugin names */
   getPlugins(): string[];
+
+  /** Gracefully close the server and run cleanup hooks */
+  close(): Promise<void>;
+  close(cb: (err?: Error | null) => void): KaelumApp;
+
+  /** Register a cleanup function to run during graceful shutdown */
+  onShutdown(fn: () => void | Promise<void>): KaelumApp;
 }
 
 /**

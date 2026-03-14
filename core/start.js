@@ -5,6 +5,9 @@
 // - If a server is already running, returns the existing server (no double-listen)
 // - Stores the server instance in app.locals._kaelum_server
 // - Attaches basic error logging for startup errors
+// - Enables graceful shutdown by default (unless config disables it)
+
+const { enableGracefulShutdown } = require("./shutdown");
 
 /**
  * Normalize and validate a port-like value.
@@ -108,6 +111,16 @@ function start(app, port, cb) {
 
   // persist reference so we can check or close later
   app.locals._kaelum_server = server;
+
+  // enable graceful shutdown by default unless explicitly disabled
+  const shutdownCfg = cfg.gracefulShutdown;
+  if (shutdownCfg !== false) {
+    const shutdownOpts =
+      typeof shutdownCfg === "object" && shutdownCfg !== null
+        ? shutdownCfg
+        : {};
+    enableGracefulShutdown(app, shutdownOpts);
+  }
 
   return server;
 }
