@@ -11,6 +11,7 @@ interface KaelumConfig {
   views?: { engine?: string; path?: string };
   logger?: boolean | false;
   gracefulShutdown?: boolean | GracefulShutdownConfig;
+  rateLimit?: boolean | RateLimitConfig;
 }
 
 interface HealthOptions {
@@ -38,6 +39,29 @@ interface GracefulShutdownConfig {
   timeout?: number;
   /** Process signals to handle (default: ["SIGTERM", "SIGINT"]) */
   signals?: string[];
+}
+
+interface RateLimitConfig {
+  /** Window duration in ms (default: 900000 = 15 min) */
+  windowMs?: number;
+  /** Max requests per window per key (default: 100) */
+  max?: number;
+  /** Response body when rate limited */
+  message?: string | object;
+  /** HTTP status when rate limited (default: 429) */
+  statusCode?: number;
+  /** Custom key generator (default: req.ip) */
+  keyGenerator?: (req: any) => string;
+  /** Skip rate limiting for certain requests */
+  skip?: (req: any) => boolean;
+  /** Send standard rate-limit headers (default: true) */
+  headers?: boolean;
+  /** Custom store (must implement increment, resetKey, shutdown) */
+  store?: {
+    increment(key: string): { totalHits: number; resetTime: number };
+    resetKey(key: string): void;
+    shutdown(): void;
+  };
 }
 
 interface RedirectEntry {
