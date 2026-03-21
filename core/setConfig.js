@@ -91,6 +91,23 @@ function removeKaelumHelmet(app) {
 }
 
 /**
+ * Remove Kaelum-installed rate-limiting middleware (if any)
+ * Also shuts down the MemoryStore cleanup interval.
+ * @param {Object} app
+ */
+function removeKaelumRateLimit(app) {
+  const prev = app.locals && app.locals._kaelum_ratelimit;
+  if (prev) {
+    // shut down the store's cleanup interval if present
+    if (prev._store && typeof prev._store.shutdown === "function") {
+      prev._store.shutdown();
+    }
+    removeMiddlewareByFn(app, prev);
+    app.locals._kaelum_ratelimit = null;
+  }
+}
+
+/**
  * Apply configuration options to the app
  * @param {Object} app - express app instance
  * @param {Object} options - supported keys: cors, helmet, static, logs, port, bodyParser
@@ -254,6 +271,27 @@ function setConfig(app, options = {}) {
         app.set("views", p);
         console.log(`🎨 Views directory set to: ${p}`);
       }
+    }
+  }
+
+  // --- Rate Limiting ---
+  if (options.hasOwnProperty("rateLimit")) {
+    if (options.rateLimit) {
+      const { createRateLimiter } = require("./rateLimit");
+      const rateLimitOpts =
+        options.rateLimit === true ? {} : options.rateLimit;
+
+      // remove previous Kaelum-installed rate limiter if exists
+      removeKaelumRateLimit(app);
+
+      const rateLimitFn = createRateLimiter(rateLimitOpts);
+      app.locals._kaelum_ratelimit = rateLimitFn;
+      app.use(rateLimitFn);
+      console.log("⏱️  Rate limiting activated.");
+    } else {
+      // disable Kaelum-installed rate limiter if present
+      removeKaelumRateLimit(app);
+      console.log("⏱️  Rate limiting disabled (Kaelum-managed).");
     }
   }
 
