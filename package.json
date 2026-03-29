@@ -1,6 +1,6 @@
 {
   "name": "kaelum",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "A minimalist Node.js framework for building web pages and APIs with simplicity and speed.",
   "main": "index.js",
   "types": "index.d.ts",
