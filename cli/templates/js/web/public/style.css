@@ -44,6 +44,7 @@ header h1 {
   display: flex;
   gap: 16px;
   margin-top: 12px;
+  flex-wrap: wrap;
 }
 
 .card {
@@ -52,6 +53,7 @@ header h1 {
   padding: 16px;
   box-shadow: 0 6px 18px rgba(37, 57, 99, 0.06);
   flex: 1;
+  min-width: 200px;
 }
 
 .small {

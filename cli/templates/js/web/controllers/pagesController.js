@@ -8,11 +8,11 @@ exports.home = (req, res) => {
 };
 
 exports.about = (req, res) => {
-  res.send("<h1>About Kaelum</h1><p>A minimalist framework.</p>");
+  res.send("<h1>About Kaelum</h1><p>A minimalist Node.js framework.</p>");
 };
 
 exports.team = (req, res) => {
-  res.send("<h1>Our Team</h1><p>Built by open source contributors.</p>");
+  res.send("<h1>Our Team</h1><p>Built by open-source contributors.</p>");
 };
 
 exports.dashboard = (req, res) => {
