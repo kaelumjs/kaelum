@@ -5,29 +5,29 @@ const auth = require("./middlewares/authMock");
 module.exports = (app) => {
   // Global middleware for /users path
   app.setMiddleware("/users", (req, res, next) => {
-    // Simple method check
+    // Require auth on POST requests
     if (req.method === "POST") return auth(req, res, next);
     next();
   });
 
-  // Recursive Nested Routing Example
+  // RESTful nested routing example
   app.apiRoute("users", {
-    get: users.list,   // GET /users
-    post: users.create, // POST /users (protected by middleware above)
+    get: users.list,
+    post: users.create,
 
     // Nested parameter: /users/:id
     "/:id": {
-      get: users.get, // GET /users/:id
+      get: users.get,
 
       // Nested resource: /users/:id/posts
       "/posts": {
-        get: users.posts, // GET /users/:id/posts
+        get: users.posts,
       },
     },
   });
 
   // Metadata endpoint
   app.addRoute("/meta", {
-    get: (req, res) => res.json({ version: "1.4.2", framework: "Kaelum" }),
+    get: (req, res) => res.json({ version: "1.8.0", framework: "Kaelum" }),
   });
 };

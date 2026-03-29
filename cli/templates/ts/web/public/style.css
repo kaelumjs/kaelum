@@ -1,0 +1,63 @@
+:root {
+  --bg: #f6fbff;
+  --card: #ffffff;
+  --accent: #6fa8dc;
+  --text: #243746;
+  --muted: #6b7a86;
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+  max-width: 900px;
+  margin: 48px auto;
+  padding: 24px;
+}
+
+header h1 {
+  margin: 0;
+  color: var(--accent);
+  font-size: 2.1rem;
+}
+
+.subtitle {
+  margin: 6px 0 18px 0;
+  color: var(--muted);
+}
+
+.content {
+  margin-top: 18px;
+}
+
+.cards {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 6px 18px rgba(37, 57, 99, 0.06);
+  flex: 1;
+  min-width: 200px;
+}
+
+.small {
+  margin-top: 20px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}

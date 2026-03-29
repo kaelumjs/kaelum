@@ -18,11 +18,10 @@ function runInstall(cwd) {
     const cmd = "npm";
     const args = lockExists ? ["ci"] : ["install"];
 
-    // Spawn child process and inherit stdio so user sees progress
     const child = spawn(cmd, args, {
       cwd,
       stdio: "inherit",
-      shell: process.platform === "win32", // improves compatibility on Windows
+      shell: process.platform === "win32",
     });
 
     child.on("error", (err) => {
@@ -38,103 +37,149 @@ function runInstall(cwd) {
 
 /**
  * createProject - create project from template
- * @param {Object} defaults - optional { projectName, template, autoInstall }
+ * @param {Object} defaults - optional { projectName, language, template, autoInstall }
  */
 async function createProject(defaults = {}) {
-  console.log("🚀 Bem-vindo ao Kaelum CLI!");
+  console.log("🚀 Welcome to Kaelum CLI!\n");
 
   try {
-    // ensure templates dir exists
+    // Ensure templates dir exists
     const templatesExists = await fs.pathExists(templatesDir);
     if (!templatesExists) {
-      console.error("❌ Diretório de templates não encontrado no CLI.");
+      console.error("❌ Templates directory not found in CLI.");
       return;
     }
 
-    // gather answers (use defaults when present)
-    const answers = await inq.prompt([
-      {
+    // Gather answers (use defaults when present)
+    const questions = [];
+
+    // Project name
+    if (!defaults.projectName) {
+      questions.push({
         type: "input",
         name: "projectName",
-        message: "Qual será o nome do seu projeto?",
-        default: defaults.projectName || "",
-        validate: (input) => (input ? true : "O nome não pode ser vazio."),
-      },
-      {
+        message: "What is your project name?",
+        validate: (input) => (input ? true : "Project name cannot be empty."),
+      });
+    }
+
+    // Language selection
+    if (!defaults.language) {
+      questions.push({
+        type: "list",
+        name: "language",
+        message: "Choose your language:",
+        choices: [
+          { name: "JavaScript", value: "js" },
+          { name: "TypeScript", value: "ts" },
+        ],
+        default: "js",
+      });
+    }
+
+    // Template selection
+    if (!defaults.template) {
+      questions.push({
         type: "list",
         name: "template",
-        message: "Qual template você deseja usar?",
-        choices: async () => {
-          // list available template folders
-          try {
-            const items = await fs.readdir(templatesDir, {
-              withFileTypes: true,
-            });
-            return items.filter((i) => i.isDirectory()).map((i) => i.name);
-          } catch (e) {
-            return ["web", "api"];
-          }
-        },
-        default: defaults.template || "web",
-      },
-      {
-        type: "confirm",
-        name: "autoInstall",
-        message:
-          "Deseja que eu execute 'npm install' agora (recomendado)?",
-        default:
-          typeof defaults.autoInstall === "boolean"
-            ? defaults.autoInstall
-            : true,
-      },
-    ]);
+        message: "Choose your template:",
+        choices: [
+          { name: "web — MVC with views & static files", value: "web" },
+          { name: "api — REST API ready", value: "api" },
+        ],
+        default: "web",
+      });
+    }
 
-    const { projectName, template, autoInstall } = answers;
+    // Auto install
+    questions.push({
+      type: "confirm",
+      name: "autoInstall",
+      message: "Install dependencies now? (recommended)",
+      default:
+        typeof defaults.autoInstall === "boolean"
+          ? defaults.autoInstall
+          : true,
+    });
+
+    const answers = await inq.prompt(questions);
+
+    // Merge defaults with answers
+    const projectName = defaults.projectName || answers.projectName;
+    const language = defaults.language || answers.language;
+    const template = defaults.template || answers.template;
+    const autoInstall = answers.autoInstall;
+
     const targetDir = path.resolve(process.cwd(), projectName);
-    const templateDir = path.join(templatesDir, template);
+    const templateDir = path.join(templatesDir, language, template);
 
-    // template existence check
+    // Template existence check
     const templateExists = await fs.pathExists(templateDir);
     if (!templateExists) {
-      console.error(`\n❌ Template "${template}" não encontrado.`);
+      console.error(`\n❌ Template "${language}/${template}" not found.`);
       return;
     }
 
     if (await fs.pathExists(targetDir)) {
       console.error(
-        `\n❌ A pasta "${projectName}" já existe. Escolha outro nome ou apague a pasta existente.`
+        `\n❌ Folder "${projectName}" already exists. Choose a different name or delete the existing folder.`
       );
       return;
     }
 
-    // copy + update package.json
-    const result = await copyTemplate(templateDir, targetDir, projectName);
+    // Copy template, update package.json, generate .env and .gitignore
+    const isTypeScript = language === "ts";
+    const result = await copyTemplate(templateDir, targetDir, projectName, {
+      isTypeScript,
+    });
     if (!result.ok) {
-      console.error(`\n❌ Erro ao copiar o template: ${result.error}`);
+      console.error(`\n❌ Error copying template: ${result.error}`);
       return;
     }
 
-    console.log(`\n✅ Projeto "${projectName}" criado com sucesso!`);
-    console.log(`➡️  Acesse a pasta: cd ${projectName}`);
+    // Post-creation summary
+    const langLabel = language === "ts" ? "TypeScript" : "JavaScript";
+    console.log(`\n✅ Project "${projectName}" created successfully!`);
+    console.log(`   Language: ${langLabel}`);
+    console.log(`   Template: ${template}`);
+    console.log(`\n📁 cd ${projectName}`);
 
     if (autoInstall) {
-      console.log("⬇️  Instalando dependências (npm)... (isso pode levar alguns minutos)");
+      console.log("📦 Installing dependencies... (this may take a few minutes)\n");
       try {
         await runInstall(targetDir);
-        console.log("\n✅ Dependências instaladas com sucesso!");
-        console.log("➡️  Para iniciar o projeto, execute: npm start\n");
+        console.log("\n✅ Dependencies installed successfully!");
+        if (isTypeScript) {
+          console.log("\n📌 Next steps:");
+          console.log(`   npm run dev     Start development server (tsx watch)`);
+          console.log(`   npm run build   Compile TypeScript to JavaScript`);
+          console.log(`   npm start       Run compiled output\n`);
+        } else {
+          console.log("\n📌 Next steps:");
+          console.log(`   npm start       Start the server`);
+          console.log(`   npm run dev     Start with file watching\n`);
+        }
       } catch (installErr) {
         console.error(
-          "\n❌ Falha ao instalar dependências automaticamente:",
+          "\n❌ Failed to install dependencies automatically:",
           installErr.message || installErr
         );
-        console.log(`➡️  Tente manualmente: cd ${projectName} && npm install`);
+        console.log(`➡️  Try manually: cd ${projectName} && npm install`);
       }
     } else {
-      console.log(`➡️  Inicie o projeto com: cd ${projectName} && npm install && npm start\n`);
+      if (isTypeScript) {
+        console.log(`\n📌 Next steps:`);
+        console.log(`   cd ${projectName} && npm install`);
+        console.log(`   npm run dev     Start development server (tsx watch)`);
+        console.log(`   npm run build   Compile TypeScript to JavaScript`);
+        console.log(`   npm start       Run compiled output\n`);
+      } else {
+        console.log(`\n📌 Next steps:`);
+        console.log(`   cd ${projectName} && npm install && npm start\n`);
+      }
     }
   } catch (err) {
-    console.error("❌ Erro inesperado:", err.message || err);
+    console.error("❌ Unexpected error:", err.message || err);
   }
 }
 
