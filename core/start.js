@@ -50,20 +50,10 @@ function start(app, port, cb) {
       : {};
 
   // determine port precedence: explicit argument -> config -> default
-  let usePort;
-  try {
-    usePort = normalizePort(port);
-  } catch (err) {
-    throw err;
-  }
+  let usePort = normalizePort(port);
 
   if (typeof usePort === "undefined") {
-    try {
-      usePort = normalizePort(cfg && cfg.port);
-    } catch (err) {
-      // config had invalid port — surface error
-      throw err;
-    }
+    usePort = normalizePort(cfg && cfg.port);
   }
 
   if (typeof usePort === "undefined") {
