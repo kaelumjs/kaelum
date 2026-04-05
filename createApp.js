@@ -70,6 +70,7 @@ function createApp() {
       }
     } catch (e) {
       // fallback merge and persist locally
+      console.warn("Kaelum setConfig: core module error, falling back to manual merge.", e.message || e);
       const prev = app.locals.kaelumConfig || {};
       app.locals.kaelumConfig = Object.assign({}, prev, options);
       app.set("kaelum:config", app.locals.kaelumConfig);
@@ -110,24 +111,28 @@ function createApp() {
   // ---------------------------
   // bind existing core helpers to the app
   // ---------------------------
+  /** Start the HTTP server on the given port. @param {number|string} port @param {Function} [cb] @returns {import('http').Server} */
   if (typeof start === "function") {
     app.start = function (port, cb) {
       return start(app, port, cb);
     };
   }
 
+  /** Register routes with flexible handler objects. @param {string} routePath @param {Object|Function|Array} handlers */
   if (typeof addRoute === "function") {
     app.addRoute = function (routePath, handlers) {
       return addRoute(app, routePath, handlers);
     };
   }
 
+  /** Register RESTful API routes for a resource. @param {string} resource @param {Object} handlers */
   if (typeof apiRoute === "function") {
     app.apiRoute = function (resource, handlers) {
       return apiRoute(app, resource, handlers);
     };
   }
 
+  /** Register middleware, optionally scoped to a path. @param {string|Function|Array} middlewareOrPath @param {Function|Array} [maybeMiddleware] */
   if (typeof setMiddleware === "function") {
     app.setMiddleware = function (middlewareOrPath, maybeMiddleware) {
       // forward call to core/setMiddleware - keep signature flexible
@@ -138,6 +143,7 @@ function createApp() {
     };
   }
 
+  /** Register a health check endpoint. @param {string|HealthOptions} routePath @returns {KaelumApp} */
   if (typeof registerHealth === "function") {
     app.healthCheck = function (routePath = "/health") {
       registerHealth(app, routePath);
@@ -145,6 +151,7 @@ function createApp() {
     };
   }
 
+  /** Register redirect route(s). @param {string|Object|Array} from @param {string} [to] @param {number} [status=302] */
   if (typeof redirect === "function") {
     app.redirect = function (from, to, status = 302) {
       return redirect(app, from, to, status);
@@ -177,10 +184,12 @@ function createApp() {
   // ---------------------------
   // Plugin system
   // ---------------------------
+  /** Register a plugin function. @param {Function} fn @param {Object} [options] @returns {KaelumApp} */
   app.plugin = function (fn, options) {
     return registerPlugin(app, fn, options);
   };
 
+  /** List registered plugin names. @returns {string[]} */
   app.getPlugins = function () {
     return getPlugins(app);
   };
@@ -188,10 +197,12 @@ function createApp() {
   // ---------------------------
   // Graceful shutdown
   // ---------------------------
+  /** Register a cleanup function to run during graceful shutdown. @param {Function} fn @returns {KaelumApp} */
   app.onShutdown = function (fn) {
     return onShutdown(app, fn);
   };
 
+  /** Gracefully close the server and run cleanup hooks. @param {Function} [cb] @returns {Promise<void>|KaelumApp} */
   app.close = function (cb) {
     return close(app, cb);
   };
