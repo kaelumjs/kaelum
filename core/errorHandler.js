@@ -94,17 +94,13 @@ function errorHandlerFactory(options = {}) {
     }
 
     // onError hook (e.g., report to external service)
-    try {
-      if (typeof onError === "function") {
-        try {
-          onError(normalizedErr, req, res);
-        } catch (hookErr) {
-          // don't block response if hook fails
-          console.error("Kaelum errorHandler: onError hook threw", hookErr);
-        }
+    if (typeof onError === "function") {
+      try {
+        onError(normalizedErr, req, res);
+      } catch (hookErr) {
+        // don't block response if hook fails
+        console.error("Kaelum errorHandler: onError hook threw", hookErr);
       }
-    } catch (_) {
-      // ignore
     }
 
     // Respond according to Accept header: JSON preferred, fallback to text/html
