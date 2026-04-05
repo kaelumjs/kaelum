@@ -28,7 +28,6 @@ function persistConfig(app, options = {}) {
   return merged;
 }
 
-// removeMiddlewareByFn imported from ./utils.js
 
 /**
  * Remove static middleware previously installed by Kaelum (if any)
@@ -175,8 +174,8 @@ function setConfig(app, options = {}) {
     removeKaelumStatic(app);
 
     if (options.static) {
-      const expressStatic =
-        tryRequire("express").static || require("express").static;
+      const expressModule = require("express");
+      const expressStatic = expressModule.static;
       // resolve to absolute path relative to project root if necessary
       const dir =
         typeof options.static === "string"
@@ -204,8 +203,9 @@ function setConfig(app, options = {}) {
         !app.locals._kaelum_bodyparsers ||
         app.locals._kaelum_bodyparsers.length === 0
       ) {
-        const jsonParser = tryRequire("express").json();
-        const urlencodedParser = tryRequire("express").urlencoded({
+        const expressModule = require("express");
+        const jsonParser = expressModule.json();
+        const urlencodedParser = expressModule.urlencoded({
           extended: true,
         });
         app.locals._kaelum_bodyparsers = [jsonParser, urlencodedParser];
