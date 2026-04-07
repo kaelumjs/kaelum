@@ -1,5 +1,6 @@
 const users = require("./controllers/usersController");
 const { authMock } = require("./middlewares/authMock");
+const { version } = require("../../package.json");
 
 const routes = (app: any): void => {
   // Global middleware for /users path
@@ -28,7 +29,7 @@ const routes = (app: any): void => {
   // Metadata endpoint
   app.addRoute("/meta", {
     get: (req: any, res: any) =>
-      res.json({ version: "1.8.0", framework: "Kaelum" }),
+      res.json({ version, framework: "Kaelum" }),
   });
 };
 
