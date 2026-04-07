@@ -2,8 +2,8 @@
 // Simple in-memory controller for Kaelum API demonstration
 
 const users = [
-  { id: 1, name: "Maria", role: "admin" },
-  { id: 2, name: "Joao", role: "user" },
+  { id: 1, name: "Alice", role: "admin" },
+  { id: 2, name: "Bob", role: "user" },
 ];
 
 exports.list = (req, res) => res.json(users);
@@ -15,7 +15,7 @@ exports.create = (req, res) => {
 };
 
 exports.get = (req, res) => {
-  const user = users.find((u) => u.id == req.params.id);
+  const user = users.find((u) => u.id === Number(req.params.id));
   return user ? res.json(user) : res.status(404).json({ error: "User not found" });
 };
 
