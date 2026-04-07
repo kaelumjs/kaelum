@@ -8,8 +8,8 @@ interface User {
 }
 
 const users: User[] = [
-  { id: 1, name: "Maria", role: "admin" },
-  { id: 2, name: "Joao", role: "user" },
+  { id: 1, name: "Alice", role: "admin" },
+  { id: 2, name: "Bob", role: "user" },
 ];
 
 const list = (req: any, res: any): void => {
