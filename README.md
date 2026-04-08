@@ -84,11 +84,14 @@ app.start();
 ## ⚡ Quick Start
 
 ```bash
-# Scaffold a new project
-npx kaelum create my-app --template web
+# Scaffold a new project (interactive — picks language + template)
+npx kaelum create my-app
 
-# Or an API project
-npx kaelum create my-api --template api
+# Or non-interactive with a specific template
+npx kaelum create my-app --template js-web
+npx kaelum create my-api --template js-api
+npx kaelum create my-app --template ts-web
+npx kaelum create my-api --template ts-api
 
 # Run it
 cd my-app && npm install && npm start
@@ -96,21 +99,35 @@ cd my-app && npm install && npm start
 
 > No global install needed — `npx` handles everything.
 
+### Available Templates
+
+| Template | Language   | Description                               |
+| -------- | ---------- | ----------------------------------------- |
+| `js-web` | JavaScript | MVC with views & static files             |
+| `js-api` | JavaScript | REST API ready                            |
+| `ts-web` | TypeScript | MVC with views & static files (tsx + tsc) |
+| `ts-api` | TypeScript | REST API ready (tsx + tsc)                |
+
+> Legacy aliases `web` and `api` map to `js-web` and `js-api`.
+
 ---
 
 ## ✨ Features
 
-| Feature | Description |
-|---------|-------------|
-| 🚀 **Zero-Config Start** | JSON parsing, static files, EJS views — all pre-configured |
-| 🌳 **Tree Routing** | Recursive nested routes with `addRoute` and `apiRoute` |
-| 🔒 **Security Built-in** | One-toggle CORS, Helmet, and XSS protection |
-| 🛠️ **CLI Scaffolding** | `npx kaelum create` with Web and API templates |
-| 📦 **Dual Module** | Works with both `require()` and `import` |
-| 🏥 **Health Checks** | Built-in `/health` endpoint with readiness probes |
-| ⚡ **Middleware Manager** | Track, add, and remove middleware programmatically |
-| 🔄 **Redirects** | Declarative redirect maps with single, array, or object syntax |
-| 🛡️ **Error Handler** | Standardized JSON/HTML error responses with hooks |
+| Feature                  | Description                                                    |
+| ------------------------ | -------------------------------------------------------------- |
+| 🚀 **Zero-Config Start**  | JSON parsing, static files, EJS views — all pre-configured     |
+| 🌳 **Tree Routing**       | Recursive nested routes with `addRoute` and `apiRoute`         |
+| 🔒 **Security Built-in**  | One-toggle CORS, Helmet, and XSS protection                    |
+| 🛠️ **CLI Scaffolding**    | `npx kaelum create` with JS and TS templates (web + API)       |
+| 📦 **Dual Module**        | Works with both `require()` and `import`                       |
+| 🏥 **Health Checks**      | Built-in `/health` endpoint with readiness probes              |
+| ⚡ **Middleware Manager** | Track, add, and remove middleware programmatically             |
+| 🔄 **Redirects**          | Declarative redirect maps with single, array, or object syntax |
+| 🛡️ **Error Handler**      | Standardized JSON/HTML error responses with hooks              |
+| ⏱️ **Rate Limiting**      | Built-in zero-dependency in-memory rate limiter                |
+| 🧩 **Plugin System**      | Register and manage plugins with dedup guard                   |
+| 🔌 **Graceful Shutdown**  | Signal handling, connection draining, and cleanup hooks        |
 
 ---
 
@@ -145,6 +162,8 @@ app.setConfig({
   bodyParser: true,     // JSON + urlencoded (default: on)
   port: 3000,           // preferred port
   views: { engine: "ejs", path: "./views" },
+  rateLimit: true,      // enable rate limiting (default: 100 req/15 min)
+  gracefulShutdown: { timeout: 10000 }, // signal handling + cleanup
 });
 ```
 
@@ -185,20 +204,32 @@ app.apiRoute("products", {
 app.start(3000);                              // start server
 app.setMiddleware("/admin", authMiddleware);   // scoped middleware
 app.redirect("/old", "/new", 301);            // redirects
-app.healthCheck("/health");                   // health endpoint
-app.useErrorHandler({ exposeStack: false });  // error handling
+app.healthCheck("/health");                    // health endpoint
+app.useErrorHandler({ exposeStack: false });   // error handling
+app.plugin(myPlugin, { key: "value" });        // register plugin
+app.onShutdown(() => cleanup());               // shutdown hook
+app.close();                                   // graceful close
+```
+
+### CLI Commands
+
+```bash
+kaelum create              # interactive project scaffolding
+kaelum --version           # show installed version
+kaelum info                # show environment details
+kaelum help                # show all commands
 ```
 
 ---
 
 ## 📁 Project Templates
 
-### Web Template
+### JavaScript Web (`js-web`)
 
 ```
 my-web-app/
 ├── public/            # Static assets
-├── views/             # EJS templates
+├── views/             # HTML templates
 ├── controllers/       # Route logic (MVC)
 ├── middlewares/        # Custom middleware
 ├── routes.js          # Route definitions
@@ -206,7 +237,7 @@ my-web-app/
 └── package.json
 ```
 
-### API Template
+### JavaScript API (`js-api`)
 
 ```
 my-api/
@@ -214,6 +245,34 @@ my-api/
 ├── middlewares/        # Auth, validation
 ├── routes.js          # API routes
 ├── app.js             # Entry point
+└── package.json
+```
+
+### TypeScript Web (`ts-web`)
+
+```
+my-web-app/
+├── public/            # Static assets
+├── views/             # HTML templates
+├── src/
+│   ├── controllers/   # Route logic (MVC)
+│   ├── middlewares/    # Custom middleware
+│   ├── routes.ts      # Route definitions
+│   └── app.ts         # Entry point
+├── tsconfig.json
+└── package.json
+```
+
+### TypeScript API (`ts-api`)
+
+```
+my-api/
+├── src/
+│   ├── controllers/   # Business logic
+│   ├── middlewares/    # Auth, validation
+│   ├── routes.ts      # API routes
+│   └── app.ts         # Entry point
+├── tsconfig.json
 └── package.json
 ```
 
@@ -239,10 +298,10 @@ See also: [Code of Conduct](https://github.com/kaelumjs/.github/blob/main/CODE_O
 
 ## 🌐 Ecosystem
 
-| Package | Description |
-|---------|-------------|
-| [kaelum](https://www.npmjs.com/package/kaelum) | Core framework |
-| [kaelumjs/docs](https://github.com/kaelumjs/docs) | Documentation site |
+| Package                                                 | Description                |
+| ------------------------------------------------------- | -------------------------- |
+| [kaelum](https://www.npmjs.com/package/kaelum)          | Core framework             |
+| [kaelumjs/docs](https://github.com/kaelumjs/docs)       | Documentation site         |
 | [kaelumjs/.github](https://github.com/kaelumjs/.github) | Shared community standards |
 
 ---
