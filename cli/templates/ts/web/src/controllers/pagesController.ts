@@ -1,6 +1,9 @@
 // controllers/pagesController.ts
 const path = require("path");
 
+// Uses process.cwd() so it resolves from the project root in both
+// development (tsx) and production (compiled dist/), since views/
+// lives at the project root alongside src/.
 const view = (file: string): string => path.join(process.cwd(), "views", file);
 
 const home = (req: any, res: any): void => {
