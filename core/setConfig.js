@@ -226,11 +226,12 @@ function setConfig(app, options = {}) {
       if (!morgan) {
         console.warn("Kaelum: morgan package not installed. Skipping logs.");
       } else {
-        // simple dev format by default; could be configured
-        const logger = morgan("dev");
+        // use provided format string, default to 'dev' when logs: true
+        const format = typeof options.logs === "string" ? options.logs : "dev";
+        const logger = morgan(format);
         app.locals._kaelum_logger = logger;
         app.use(logger);
-        console.log("📊 Request logging enabled (morgan).");
+        console.log(`📊 Request logging enabled (morgan: ${format}).`);
       }
     } else {
       console.log("📊 Request logging disabled.");
