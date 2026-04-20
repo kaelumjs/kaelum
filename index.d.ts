@@ -103,6 +103,8 @@ interface KaelumApp extends Express {
 
   /** Register RESTful API routes for a resource */
   apiRoute(resource: string, handlers: RouteHandlers): void;
+  apiRoute(resource: string, handler: RequestHandler): void;
+  apiRoute(resource: string, crud: true): void;
 
   /** Register middleware (optionally scoped to a path) */
   setMiddleware(middleware: RequestHandler | RequestHandler[]): MiddlewareEntry[];
