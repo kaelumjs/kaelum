@@ -1,5 +1,5 @@
-const pages = require("./controllers/pagesController");
-const { logger } = require("./middlewares/logger");
+import * as pages from "./controllers/pagesController";
+import { logger } from "./middlewares/logger";
 
 // Mock auth middleware
 const auth = (req: any, res: any, next: any): void => {

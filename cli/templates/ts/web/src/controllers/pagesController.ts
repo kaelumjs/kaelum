@@ -1,5 +1,5 @@
 // controllers/pagesController.ts
-const path = require("path");
+import path from "path";
 
 // Uses process.cwd() so it resolves from the project root in both
 // development (tsx) and production (compiled dist/), since views/
