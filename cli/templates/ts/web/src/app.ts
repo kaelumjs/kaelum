@@ -1,4 +1,5 @@
-const kaelum = require("kaelum");
+import kaelum from "kaelum";
+import { routes } from "./routes";
 
 const app = kaelum();
 
@@ -11,7 +12,6 @@ app.setConfig({
 });
 
 // Register routes
-const { routes } = require("./routes");
 routes(app);
 
 // Health check endpoint
@@ -28,5 +28,3 @@ app.useErrorHandler({ exposeStack: false });
 // Start server
 const PORT = process.env.PORT || 3000;
 app.start(PORT);
-
-export {};
