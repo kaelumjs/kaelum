@@ -119,6 +119,18 @@ function removeKaelumCsrf(app) {
 }
 
 /**
+ * Remove Kaelum-installed ETag exclude middleware (if any) and reset etag setting
+ * @param {Object} app
+ */
+function removeKaelumEtag(app) {
+  const prev = app.locals && app.locals._kaelum_etag_exclude;
+  if (prev) {
+    removeMiddlewareByFn(app, prev);
+    app.locals._kaelum_etag_exclude = null;
+  }
+}
+
+/**
  * Apply configuration options to the app
  * @param {Object} app - express app instance
  * @param {Object} options - supported keys: cors, helmet, static, logs, port, bodyParser
@@ -324,6 +336,24 @@ function setConfig(app, options = {}) {
     } else {
       removeKaelumCsrf(app);
       console.log("🔒 CSRF protection disabled (Kaelum-managed).");
+    }
+  }
+
+  // --- ETag ---
+  if (options.hasOwnProperty("etag")) {
+    if (options.etag) {
+      const { setupEtag } = require("./etag");
+      const etagOpts = options.etag === true ? {} : options.etag;
+
+      // Remove previous exclude middleware if exists
+      removeKaelumEtag(app);
+
+      setupEtag(app, etagOpts);
+      console.log(`🏷️  ETag support activated (${etagOpts.weak ? "weak" : "strong"}).`);
+    } else {
+      removeKaelumEtag(app);
+      app.set("etag", false);
+      console.log("🏷️  ETag support disabled.");
     }
   }
 

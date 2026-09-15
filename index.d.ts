@@ -90,6 +90,8 @@ interface KaelumConfig {
   rateLimit?: boolean | RateLimitConfig;
   /** CSRF protection via origin check. Pass true to use host-based auto-detection. */
   csrf?: boolean | CsrfOptions;
+  /** ETag support. Pass true for strong ETags, or an options object. */
+  etag?: boolean | EtagOptions;
 }
 
 /** Options for CSRF protection */
@@ -106,6 +108,14 @@ interface CsrfOptions {
   header?: string;
   /** Extra options passed to res.cookie() in double-submit mode. */
   cookieOptions?: object;
+}
+
+/** Options for ETag support */
+interface EtagOptions {
+  /** Use weak ETags (W/"..."). Default: false (strong ETags). */
+  weak?: boolean;
+  /** Paths that should NOT receive ETag headers (exact or prefix with '/*'). */
+  exclude?: string[];
 }
 
 interface HealthOptions {
@@ -300,6 +310,9 @@ interface KaelumApp extends Express {
 
   /** Activate CSRF double-submit cookie + custom header protection */
   useCsrf(options?: CsrfOptions): KaelumApp;
+
+  /** Activate ETag support. Uses Express's native ETag engine. */
+  useEtag(options?: EtagOptions): KaelumApp;
 }
 
 declare global {

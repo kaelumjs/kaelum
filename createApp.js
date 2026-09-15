@@ -32,6 +32,7 @@ const timing = require("./core/timing");
 const responseHelpers = require("./core/responseHelpers");
 const group = require("./core/group");
 const { doubleSubmit: csrfDoubleSubmit } = require("./core/csrf");
+const { setupEtag } = require("./core/etag");
 
 function createApp() {
   const app = express();
@@ -214,11 +215,19 @@ function createApp() {
     };
   }
 
-  /** Activate CSRF double-submit cookie protection. @param {CsrfOptions} [options] @returns {KaelumApp} */
+  /** Activate CSRF double-submit cookie + custom header protection */
   if (typeof csrfDoubleSubmit === "function") {
     app.useCsrf = function (options) {
       const mw = csrfDoubleSubmit(options);
       app.use(mw);
+      return app;
+    };
+  }
+
+  /** Activate ETag support. Uses Express's native ETag engine. @param {EtagOptions} [options] @returns {KaelumApp} */
+  if (typeof setupEtag === "function") {
+    app.useEtag = function (options) {
+      setupEtag(app, options);
       return app;
     };
   }
