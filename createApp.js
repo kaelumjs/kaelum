@@ -33,6 +33,7 @@ const responseHelpers = require("./core/responseHelpers");
 const group = require("./core/group");
 const { doubleSubmit: csrfDoubleSubmit } = require("./core/csrf");
 const { setupEtag } = require("./core/etag");
+const { notFound, methodNotAllowed } = require("./core/notFound");
 
 function createApp() {
   const app = express();
@@ -228,6 +229,26 @@ function createApp() {
   if (typeof setupEtag === "function") {
     app.useEtag = function (options) {
       setupEtag(app, options);
+      return app;
+    };
+  }
+
+  // ---------------------------
+  // Not Found & Method Not Allowed
+  // ---------------------------
+  
+  /** Register a 404 Not Found handler. @param {Function} [handler] @returns {KaelumApp} */
+  if (typeof notFound === "function") {
+    app.notFound = function (handler) {
+      app.use(notFound(handler));
+      return app;
+    };
+  }
+
+  /** Register a 405 Method Not Allowed handler. @param {MethodNotAllowedOptions} [options] @returns {KaelumApp} */
+  if (typeof methodNotAllowed === "function") {
+    app.useMethodNotAllowed = function (options) {
+      app.use(methodNotAllowed(app, options));
       return app;
     };
   }

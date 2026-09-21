@@ -118,6 +118,14 @@ interface EtagOptions {
   exclude?: string[];
 }
 
+export interface MethodNotAllowedOptions {
+  /**
+   * Custom handler for 405 Method Not Allowed.
+   * If provided, Kaelum will call this instead of returning the default JSON response.
+   */
+  handler?: (req: Request, res: Response, allowedMethods: string[]) => any;
+}
+
 interface HealthOptions {
   path?: string;
   method?: string;
@@ -311,8 +319,40 @@ interface KaelumApp extends Express {
   /** Activate CSRF double-submit cookie + custom header protection */
   useCsrf(options?: CsrfOptions): KaelumApp;
 
-  /** Activate ETag support. Uses Express's native ETag engine. */
-  useEtag(options?: EtagOptions): KaelumApp;
+  /**
+   * Activate ETag support. Uses Express's native ETag engine.
+   * @param options Configuration for ETag generation and excluded paths
+   * @returns The Kaelum app instance
+   */
+  useEtag(options?: EtagOptions): this;
+
+  /**
+   * Register a custom 404 Not Found handler.
+   * If no handler is provided, it defaults to a clean JSON response.
+   * Should be registered after all routes and before useErrorHandler().
+   * @param handler Custom Express RequestHandler
+   * @returns The Kaelum app instance
+   */
+  notFound(handler?: RequestHandler): this;
+
+  /**
+   * Register a 405 Method Not Allowed handler.
+   * Intercepts requests where the path exists but the method is not defined for it.
+   * Should be registered before notFound().
+   * @param options Custom options and handler for 405 responses
+   * @returns The Kaelum app instance
+   */
+  useMethodNotAllowed(options?: MethodNotAllowedOptions): this;
+
+  /**
+   * Generic error handler exposed to be used at the end of the route definitions.
+   * @param options Object to configure exposing stack traces.
+   * @returns The Kaelum app instance
+   */
+  useErrorHandler(options?: ErrorHandlerOptions): this;
+
+  /** Alias for useErrorHandler */
+  errorHandler(options?: ErrorHandlerOptions): this;
 }
 
 declare global {
