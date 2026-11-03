@@ -126,6 +126,23 @@ export interface MethodNotAllowedOptions {
   handler?: (req: Request, res: Response, allowedMethods: string[]) => any;
 }
 
+export interface TrimTrailingSlashOptions {
+  /** HTTP redirect status code. Defaults to 301. */
+  status?: 301 | 302 | 307 | 308;
+}
+
+export interface IpRestrictionOptions {
+  /** CIDR or exact IP addresses to always allow. Allow list takes priority over deny. */
+  allow?: string[];
+  /** CIDR or exact IP addresses to deny. Use '0.0.0.0/0' to deny all by default. */
+  deny?: string[];
+  /** Custom handler called when access is denied. */
+  onDenied?: (req: Request, res: Response) => any;
+}
+
+/** Pretty JSON mode: true / 'always' = always format, 'query' = only when ?pretty is in URL */
+export type PrettyJsonMode = boolean | 'query' | 'always';
+
 interface HealthOptions {
   path?: string;
   method?: string;
@@ -353,6 +370,29 @@ interface KaelumApp extends Express {
 
   /** Alias for useErrorHandler */
   errorHandler(options?: ErrorHandlerOptions): this;
+
+  /**
+   * Enable pretty-printed JSON responses.
+   * @param mode true/'always' = always pretty, 'query' = only when ?pretty is present
+   * @returns The Kaelum app instance
+   */
+  usePrettyJson(mode?: PrettyJsonMode): this;
+
+  /**
+   * Redirect requests with trailing slashes to their canonical path.
+   * Example: /users/ → /users (preserving query string).
+   * @param options Redirect status configuration
+   * @returns The Kaelum app instance
+   */
+  useTrimTrailingSlash(options?: TrimTrailingSlashOptions): this;
+
+  /**
+   * Restrict access by IP address or CIDR range.
+   * Allow list takes priority over deny list.
+   * @param options IP allow/deny rules and optional custom handler
+   * @returns The Kaelum app instance
+   */
+  ipRestriction(options: IpRestrictionOptions): this;
 }
 
 declare global {

@@ -131,6 +131,42 @@ function removeKaelumEtag(app) {
 }
 
 /**
+ * Remove Kaelum-installed Pretty JSON middleware (if any)
+ * @param {Object} app
+ */
+function removeKaelumPrettyJson(app) {
+  const prev = app.locals && app.locals._kaelum_prettyjson;
+  if (prev) {
+    removeMiddlewareByFn(app, prev);
+    app.locals._kaelum_prettyjson = null;
+  }
+}
+
+/**
+ * Remove Kaelum-installed Trailing Slash middleware (if any)
+ * @param {Object} app
+ */
+function removeKaelumTrailingSlash(app) {
+  const prev = app.locals && app.locals._kaelum_trailingslash;
+  if (prev) {
+    removeMiddlewareByFn(app, prev);
+    app.locals._kaelum_trailingslash = null;
+  }
+}
+
+/**
+ * Remove Kaelum-installed IP Restriction middleware (if any)
+ * @param {Object} app
+ */
+function removeKaelumIpRestriction(app) {
+  const prev = app.locals && app.locals._kaelum_iprestriction;
+  if (prev) {
+    removeMiddlewareByFn(app, prev);
+    app.locals._kaelum_iprestriction = null;
+  }
+}
+
+/**
  * Apply configuration options to the app
  * @param {Object} app - express app instance
  * @param {Object} options - supported keys: cors, helmet, static, logs, port, bodyParser
@@ -354,6 +390,91 @@ function setConfig(app, options = {}) {
       removeKaelumEtag(app);
       app.set("etag", false);
       console.log("🏷️  ETag support disabled.");
+    }
+  }
+
+  // --- Pretty JSON ---
+  if (options.hasOwnProperty("prettyJson")) {
+    if (options.prettyJson) {
+      const { setupPrettyJson } = require("./prettyJson");
+      const mode = options.prettyJson === true ? true : options.prettyJson;
+
+      removeKaelumPrettyJson(app);
+
+      // Wrap app.use to capture the middleware reference for future removal
+      const originalUse = app.use.bind(app);
+      let captured = null;
+      app.use = function (...args) {
+        if (args.length === 1 && typeof args[0] === "function") {
+          captured = args[0];
+        }
+        return originalUse(...args);
+      };
+      setupPrettyJson(app, mode);
+      app.use = originalUse;
+      if (captured) app.locals._kaelum_prettyjson = captured;
+
+      const modeLabel = mode === "query" ? "query-triggered" : "always";
+      console.log(`✨ Pretty JSON activated (${modeLabel}).`);
+    } else {
+      removeKaelumPrettyJson(app);
+      console.log("✨ Pretty JSON disabled (Kaelum-managed).");
+    }
+  }
+
+  // --- Trim Trailing Slash ---
+  if (options.hasOwnProperty("trimTrailingSlash")) {
+    if (options.trimTrailingSlash) {
+      const { setupTrimTrailingSlash } = require("./trailingSlash");
+      const opts =
+        options.trimTrailingSlash === true ? {} : options.trimTrailingSlash;
+
+      removeKaelumTrailingSlash(app);
+
+      const originalUse = app.use.bind(app);
+      let captured = null;
+      app.use = function (...args) {
+        if (args.length === 1 && typeof args[0] === "function") {
+          captured = args[0];
+        }
+        return originalUse(...args);
+      };
+      setupTrimTrailingSlash(app, opts);
+      app.use = originalUse;
+      if (captured) app.locals._kaelum_trailingslash = captured;
+
+      console.log(`🔗 Trailing slash redirect activated (${opts.status || 301}).`);
+    } else {
+      removeKaelumTrailingSlash(app);
+      console.log("🔗 Trailing slash redirect disabled (Kaelum-managed).");
+    }
+  }
+
+  // --- IP Restriction ---
+  if (options.hasOwnProperty("ipRestriction")) {
+    if (options.ipRestriction) {
+      const { setupIpRestriction } = require("./ipRestriction");
+      const opts =
+        options.ipRestriction === true ? {} : options.ipRestriction;
+
+      removeKaelumIpRestriction(app);
+
+      const originalUse = app.use.bind(app);
+      let captured = null;
+      app.use = function (...args) {
+        if (args.length === 1 && typeof args[0] === "function") {
+          captured = args[0];
+        }
+        return originalUse(...args);
+      };
+      setupIpRestriction(app, opts);
+      app.use = originalUse;
+      if (captured) app.locals._kaelum_iprestriction = captured;
+
+      console.log("🔐 IP restriction activated.");
+    } else {
+      removeKaelumIpRestriction(app);
+      console.log("🔐 IP restriction disabled (Kaelum-managed).");
     }
   }
 

@@ -34,6 +34,9 @@ const group = require("./core/group");
 const { doubleSubmit: csrfDoubleSubmit } = require("./core/csrf");
 const { setupEtag } = require("./core/etag");
 const { notFound, methodNotAllowed } = require("./core/notFound");
+const { setupPrettyJson } = require("./core/prettyJson");
+const { setupTrimTrailingSlash } = require("./core/trailingSlash");
+const { setupIpRestriction } = require("./core/ipRestriction");
 
 function createApp() {
   const app = express();
@@ -249,6 +252,34 @@ function createApp() {
   if (typeof methodNotAllowed === "function") {
     app.useMethodNotAllowed = function (options) {
       app.use(methodNotAllowed(app, options));
+      return app;
+    };
+  }
+
+  // ---------------------------
+  // Pretty JSON, Trailing Slash, IP Restriction
+  // ---------------------------
+
+  /** Enable pretty-printed JSON responses. @param {boolean|'query'} [mode=true] @returns {KaelumApp} */
+  if (typeof setupPrettyJson === "function") {
+    app.usePrettyJson = function (mode = true) {
+      setupPrettyJson(app, mode);
+      return app;
+    };
+  }
+
+  /** Redirect trailing slash paths to their canonical form (/users/ → /users). @param {TrimTrailingSlashOptions} [options] @returns {KaelumApp} */
+  if (typeof setupTrimTrailingSlash === "function") {
+    app.useTrimTrailingSlash = function (options) {
+      setupTrimTrailingSlash(app, options);
+      return app;
+    };
+  }
+
+  /** Restrict access by IP address or CIDR range. @param {IpRestrictionOptions} options @returns {KaelumApp} */
+  if (typeof setupIpRestriction === "function") {
+    app.ipRestriction = function (options) {
+      setupIpRestriction(app, options);
       return app;
     };
   }
