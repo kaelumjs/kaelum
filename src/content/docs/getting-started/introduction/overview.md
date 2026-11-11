@@ -62,5 +62,5 @@ npm install kaelum
 ```
 
 :::note
-Kaelum requires Node.js 18+ and npm 8+.
+Kaelum requires Node.js 24.22.1+ and npm 8+.
 :::

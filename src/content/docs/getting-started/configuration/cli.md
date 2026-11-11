@@ -192,5 +192,5 @@ Every scaffolded project includes:
 - **`.gitignore`** — Standard Node.js exclusions (`node_modules/`, `.env`, `dist/`, `*.log`)
 
 :::note
-Requires Node.js 18+ and npm 8+.
+Requires Node.js 24.22.1+ and npm 8+.
 :::
