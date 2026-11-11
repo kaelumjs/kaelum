@@ -20,14 +20,12 @@ module.exports = (app) => {
     },
   });
 
-  // Middleware chain example
-  const secureSection = [logger, auth];
+  // Route group: shared prefix + middleware chain for the whole section
+  const dashboard = app.group("/dashboard", logger, auth);
 
-  // Dashboard with nested settings, protected by middleware chain
-  app.addRoute("/dashboard", {
-    get: [...secureSection, pages.dashboard],
-    "/settings": {
-      get: [...secureSection, pages.settings],
-    },
-  });
+  // GET /dashboard
+  dashboard.addRoute("/", { get: pages.dashboard });
+
+  // GET /dashboard/settings
+  dashboard.addRoute("/settings", { get: pages.settings });
 };

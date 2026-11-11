@@ -11,6 +11,16 @@ app.setConfig({
   bodyParser: true,
 });
 
+// Observability: X-Request-Id + Server-Timing headers
+app.requestId();
+app.timing();
+
+// Semantic response helpers: res.ok(), res.created(), res.notFound(), ...
+app.useResponseHelpers();
+
+// ETag + conditional requests (304 Not Modified)
+app.useEtag();
+
 // Mount routes
 routes(app);
 
@@ -22,9 +32,13 @@ app.onShutdown(() => {
   console.log("Cleaning up resources...");
 });
 
+// 405 for known paths with the wrong method, then 404 for everything else
+app.useMethodNotAllowed();
+app.notFound();
+
 // Error handler (JSON responses)
 app.useErrorHandler({ exposeStack: false });
 
 // Start server
-const PORT = process.env.PORT || 4000;
+const PORT = Number(process.env.PORT) || 4000;
 app.start(PORT);
