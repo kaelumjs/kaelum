@@ -11,6 +11,13 @@ app.setConfig({
   bodyParser: true,
 });
 
+// Observability: X-Request-Id + Server-Timing headers
+app.requestId();
+app.timing();
+
+// Redirect /about/ -> /about
+app.useTrimTrailingSlash();
+
 // Register routes
 routes(app);
 
@@ -22,9 +29,15 @@ app.onShutdown(() => {
   console.log("Cleaning up resources...");
 });
 
+// 405 for known paths with the wrong method, then a custom HTML 404
+app.useMethodNotAllowed();
+app.notFound((_req: any, res: any) => {
+  res.status(404).send("<h1>404</h1><p>Page not found.</p>");
+});
+
 // Error handler (returns JSON on errors)
 app.useErrorHandler({ exposeStack: false });
 
 // Start server
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 app.start(PORT);

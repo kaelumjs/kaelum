@@ -1,5 +1,14 @@
 import * as users from "./controllers/usersController";
 import { authMock } from "./middlewares/authMock";
+import { validate } from "kaelum/validate";
+
+// Request body validation for POST /users
+const createUserSchema = validate({
+  body: {
+    name: { type: "string", required: true, min: 2, max: 50 },
+    role: { type: "string" },
+  },
+});
 
 const routes = (app: any): void => {
   // Global middleware for /users path
@@ -12,7 +21,7 @@ const routes = (app: any): void => {
   // RESTful nested routing example
   app.apiRoute("users", {
     get: users.list,
-    post: users.create,
+    post: [createUserSchema, users.create],
 
     // Nested parameter: /users/:id
     "/:id": {
@@ -27,8 +36,7 @@ const routes = (app: any): void => {
 
   // Metadata endpoint
   app.addRoute("/meta", {
-    get: (req: any, res: any) =>
-      res.json({ framework: "Kaelum" }),
+    get: (req: any, res: any) => res.ok({ framework: "Kaelum" }),
   });
 };
 
