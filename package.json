@@ -1,80 +1,22 @@
 {
-  "name": "kaelum",
-  "version": "1.10.4",
-  "description": "A minimalist Node.js framework for building web pages and APIs with simplicity and speed.",
-  "main": "index.js",
-  "types": "index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./index.mjs",
-      "require": "./index.js"
-    },
-    "./validate": {
-      "require": "./validate.js"
-    },
-    "./test": {
-      "require": "./test.js"
-    }
-  },
-  "bin": {
-    "kaelum": "cli/index.js"
-  },
-  "scripts": {
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose",
-    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
-    "lint": "eslint .",
-    "format": "prettier --write ."
-  },
-  "funding": {
-    "type": "ko-fi",
-    "url": "https://ko-fi.com/matheusmessias"
-  },
-  "keywords": [
-    "framework",
-    "nodejs",
-    "express",
-    "cli",
-    "kaelum",
-    "api",
-    "web",
-    "minimal",
-    "starter"
-  ],
-  "author": "Matheus Campagnolo",
+  "name": "kaelum-monorepo",
+  "private": true,
+  "description": "Monorepo for the Kaelum framework",
   "license": "MIT",
+  "packageManager": "pnpm@12.21.0",
   "engines": {
     "node": ">=24.22.1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/kaelumjs/kaelum.git"
-  },
-  "bugs": {
-    "url": "https://github.com/kaelumjs/kaelum/issues"
-  },
-  "homepage": "https://kaelumjs.matthcodes.dev",
-  "dependencies": {
-    "cors": "2.8.6",
-    "dotenv": "17.4.2",
-    "ejs": "3.1.10",
-    "express": "4.22.3",
-    "fs-extra": "11.3.6",
-    "helmet": "7.2.0",
-    "inquirer": "12.11.1",
-    "morgan": "1.12.1"
+  "scripts": {
+    "test": "pnpm -r test",
+    "test:coverage": "pnpm -r test:coverage",
+    "lint": "eslint .",
+    "format": "prettier --write ."
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.0",
     "eslint": "10.6.0",
     "eslint-config-prettier": "10.1.8",
-    "jest": "30.4.2",
-    "prettier": "3.9.3",
-    "supertest": "7.2.2"
-  },
-  "jest": {
-    "testPathIgnorePatterns": [
-      "/node_modules/",
-      "^.*/validate\\.js$",
-      "^.*/test\\.js$"
-    ]
+    "prettier": "3.9.3"
   }
 }

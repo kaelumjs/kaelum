@@ -34,3 +34,7 @@ build/
 docs/.vitepress/dist
 docs/.vitepress/cache
 
+
+# Copied from the repo root on pack
+packages/*/README.md
+packages/*/LICENSE

@@ -31,10 +31,30 @@ export default [
     },
   },
   {
+    files: ["**/test/**", "**/*.test.js", "**/*.test.mjs"],
+    languageOptions: {
+      globals: {
+        describe: "readonly",
+        it: "readonly",
+        test: "readonly",
+        expect: "readonly",
+        jest: "readonly",
+        beforeAll: "readonly",
+        afterAll: "readonly",
+        beforeEach: "readonly",
+        afterEach: "readonly",
+      },
+    },
+  },
+  {
+    files: ["**/*.mjs"],
+    languageOptions: { sourceType: "module" },
+  },
+  {
     ignores: [
-      "node_modules/",
-      "coverage/",
-      "cli/templates/",
+      "**/node_modules/",
+      "**/coverage/",
+      "**/cli/templates/",
       "*.config.js",
       "*.config.mjs",
     ],
