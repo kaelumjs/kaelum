@@ -1,6 +1,11 @@
 const path = require("node:path");
 const { spawn } = require("node:child_process");
 const { copyTemplate, pathExists } = require("./utils");
+const { version } = require("../package.json");
+
+// kaelum and create-kaelum are released together with the same version, so a
+// project scaffolded by this CLI depends on the matching kaelum release.
+const kaelumVersion = `^${version}`;
 
 const templatesDir = path.resolve(__dirname, "..", "templates");
 
@@ -121,7 +126,12 @@ async function createProject(defaults = {}) {
 
     // Copy template, update package.json, generate .env and .gitignore
     const isTypeScript = language === "ts";
-    const result = await copyTemplate(templateDir, targetDir, path.basename(targetDir));
+    const result = await copyTemplate(
+      templateDir,
+      targetDir,
+      path.basename(targetDir),
+      kaelumVersion
+    );
     if (!result.ok) {
       console.error(`\n❌ Error copying template: ${result.error}`);
       return false;

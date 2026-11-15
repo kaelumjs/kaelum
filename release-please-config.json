@@ -1,0 +1,26 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "node",
+  "bootstrap-sha": "e9ab8845fa13aa935984a7b374a22d6bffb59385",
+  "versioning": "prerelease",
+  "prerelease": true,
+  "prerelease-type": "alpha",
+  "include-component-in-tag": true,
+  "packages": {
+    "packages/kaelum": {
+      "component": "kaelum",
+      "release-as": "2.0.0-alpha.0"
+    },
+    "packages/create-kaelum": {
+      "component": "create-kaelum",
+      "release-as": "2.0.0-alpha.0"
+    }
+  },
+  "plugins": [
+    {
+      "type": "linked-versions",
+      "groupName": "kaelum",
+      "components": ["kaelum", "create-kaelum"]
+    }
+  ]
+}

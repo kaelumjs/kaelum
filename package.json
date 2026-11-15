@@ -14,14 +14,19 @@
     "test:dist": "pnpm -r test:dist",
     "test:coverage": "pnpm -r test:coverage",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "publint": "publint packages/kaelum && publint packages/create-kaelum",
+    "commitlint": "commitlint"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
     "@eslint/js": "^10.0.0",
     "eslint": "10.6.0",
     "eslint-config-prettier": "10.1.8",
     "globals": "^17.14.0",
     "prettier": "3.9.3",
+    "publint": "^0.3.25",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.2"
   }
