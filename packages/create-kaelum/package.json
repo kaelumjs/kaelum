@@ -1,0 +1,41 @@
+{
+  "name": "create-kaelum",
+  "version": "0.0.0",
+  "description": "Scaffold a new Kaelum project.",
+  "bin": {
+    "create-kaelum": "src/index.js"
+  },
+  "files": [
+    "src",
+    "templates"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "prepack": "node -e \"require('fs').copyFileSync('../../LICENSE','LICENSE')\""
+  },
+  "keywords": [
+    "kaelum",
+    "create",
+    "scaffold",
+    "cli",
+    "starter",
+    "express"
+  ],
+  "author": "Matheus Campagnolo",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24.22.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kaelumjs/kaelum.git",
+    "directory": "packages/create-kaelum"
+  },
+  "bugs": {
+    "url": "https://github.com/kaelumjs/kaelum/issues"
+  },
+  "homepage": "https://kaelumjs.matthcodes.dev",
+  "dependencies": {
+    "inquirer": "12.11.1"
+  }
+}

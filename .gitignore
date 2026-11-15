@@ -36,5 +36,5 @@ docs/.vitepress/cache
 
 
 # Copied from the repo root on pack
-packages/*/README.md
+packages/kaelum/README.md
 packages/*/LICENSE
