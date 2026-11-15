@@ -9,8 +9,8 @@ Built with [Astro](https://astro.build) and [Starlight](https://starlight.astro.
 ## Development
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm --filter @kaelumjs/docs dev
 ```
 
 The site will be available at `http://localhost:4321`.
@@ -19,10 +19,10 @@ The site will be available at `http://localhost:4321`.
 
 | Command           | Action                              |
 | :---------------- | :---------------------------------- |
-| `npm install`     | Install dependencies                |
-| `npm run dev`     | Start local dev server              |
-| `npm run build`   | Build production site to `./dist/`  |
-| `npm run preview` | Preview production build locally    |
+| `pnpm install`    | Install dependencies (repo root)    |
+| `pnpm dev`        | Start local dev server              |
+| `pnpm build`      | Build production site to `./dist/`  |
+| `pnpm preview`    | Preview production build locally    |
 
 ## Structure
 
