@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.0.0-alpha.0](https://github.com/kaelumjs/kaelum/compare/kaelum-v1.10.4...kaelum-v2.0.0-alpha.0) (2026-11-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* upgrade to Express 5 and drop dotenv and morgan
+* convert kaelum to TypeScript and ESM, switch to Vitest
+* move project scaffolding to the create-kaelum package
+
+### Features
+
+* **docs:** rebuild docs on stock Starlight with AI-ready output ([3558f27](https://github.com/kaelumjs/kaelum/commit/3558f27fb0dd0665b5db0167612991cbf80c5f97))
+* **docs:** rebuild docs on stock Starlight with AI-ready output ([e44d7d8](https://github.com/kaelumjs/kaelum/commit/e44d7d862db8c70cd33830cb519fd86a942f1de9))
+* move project scaffolding to the create-kaelum package ([b32ee17](https://github.com/kaelumjs/kaelum/commit/b32ee17c95b4e7ecea239307bc2c8978d362dffa))
+* upgrade to Express 5 and drop dotenv and morgan ([d05832a](https://github.com/kaelumjs/kaelum/commit/d05832aef9e54f5b18d85d38154f8e12e9e8605f))
+
+
+### Code Refactoring
+
+* convert kaelum to TypeScript and ESM, switch to Vitest ([62f7456](https://github.com/kaelumjs/kaelum/commit/62f7456cceebae5b275a5d20994e5dc18fc7210d))
+
 ## [1.10.4](https://github.com/kaelumjs/kaelum/compare/v1.10.3...v1.10.4) (2026-11-11)
 
 ### Features
