@@ -9,10 +9,8 @@
 
 // Load environment variables: env-specific file first (.env.production, etc),
 // then base .env as fallback. Existing process.env values are never overwritten.
-import dotenv from "dotenv";
-const nodeEnv = process.env.NODE_ENV || "development";
-dotenv.config({ path: `.env.${nodeEnv}` });
-dotenv.config(); // base .env fallback (won't override existing vars)
+import { loadEnvFiles } from "./core/env.js";
+loadEnvFiles();
 
 import express from "express";
 import path from "node:path";
@@ -96,7 +94,7 @@ function createApp(): any {
     // read merged config
     const cfg = app.get("kaelum:config") || app.locals.kaelumConfig || {};
 
-    // Body parser toggle handled by core.setConfig (which manipulates app._router.stack)
+    // Body parser toggle handled by core.setConfig (which manipulates app.router.stack)
     return cfg;
   };
 

@@ -58,7 +58,7 @@ function registerMiddleware(app, path, handler) {
  * @param {string|null} path
  */
 function removeKaelumMiddlewaresForPath(app, path = null) {
-  if (!app || !app._router || !Array.isArray(app._router.stack)) return;
+  if (!app || !app.router || !Array.isArray(app.router.stack)) return;
 
   ensureLocals(app);
 
@@ -71,7 +71,7 @@ function removeKaelumMiddlewaresForPath(app, path = null) {
   if (toRemove.length === 0) return;
 
   // Remove layers whose handler matches any tracked handler for the path
-  app._router.stack = app._router.stack.filter((layer) => {
+  app.router.stack = app.router.stack.filter((layer) => {
     // keep non-route layers and those that aren't middleware we tracked
     if (!layer || !layer.handle) return true;
     // For mounted middleware, express keeps the handler directly as layer.handle

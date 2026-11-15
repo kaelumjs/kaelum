@@ -11,8 +11,6 @@ describe('core/setConfig', () => {
     app.set = vi.fn(); // mock app.set
     // Mock for app.use to track middleware registration
     app.use = vi.fn();
-    // Partially mock _router for removal logic
-    app._router = { stack: [] };
   });
 
   test('should persist config to app.locals', () => {

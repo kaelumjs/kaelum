@@ -13,11 +13,11 @@ import type { Express, NextFunction, Request, Response } from "express";
 function removeMiddlewareByFn(app: Express, fn: unknown) {
   if (
     !app ||
-    !app._router ||
-    !Array.isArray(app._router.stack)
+    !app.router ||
+    !Array.isArray(app.router.stack)
   )
     return;
-  app._router.stack = app._router.stack.filter(
+  app.router.stack = app.router.stack.filter(
     (layer: { handle: unknown }) => layer.handle !== fn
   );
 }
