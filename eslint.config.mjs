@@ -1,63 +1,43 @@
 import js from "@eslint/js";
+import globals from "globals";
 import prettier from "eslint-config-prettier";
+import tseslint from "typescript-eslint";
 
-export default [
-  js.configs.recommended,
-  prettier,
-  {
-    languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: "commonjs",
-      globals: {
-        console: "readonly",
-        process: "readonly",
-        require: "readonly",
-        module: "readonly",
-        exports: "readonly",
-        __dirname: "readonly",
-        __filename: "readonly",
-        Buffer: "readonly",
-        setImmediate: "readonly",
-        setTimeout: "readonly",
-        clearTimeout: "readonly",
-        setInterval: "readonly",
-        clearInterval: "readonly",
-      },
-    },
-    rules: {
-      "no-unused-vars": ["warn", { argsIgnorePattern: "^_|next" }],
-      "no-console": "off",
-      "prefer-const": "warn",
-    },
-  },
-  {
-    files: ["**/test/**", "**/*.test.js", "**/*.test.mjs"],
-    languageOptions: {
-      globals: {
-        describe: "readonly",
-        it: "readonly",
-        test: "readonly",
-        expect: "readonly",
-        jest: "readonly",
-        beforeAll: "readonly",
-        afterAll: "readonly",
-        beforeEach: "readonly",
-        afterEach: "readonly",
-      },
-    },
-  },
-  {
-    files: ["**/*.mjs"],
-    languageOptions: { sourceType: "module" },
-  },
+export default tseslint.config(
   {
     ignores: [
       "**/node_modules/",
+      "**/dist/",
       "**/coverage/",
-      "packages/create-kaelum/templates/",
       "apps/",
-      "*.config.js",
-      "*.config.mjs",
+      "packages/create-kaelum/templates/",
     ],
   },
-];
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  prettier,
+  {
+    languageOptions: { globals: globals.node },
+    rules: {
+      "no-console": "off",
+      "prefer-const": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_|next" }],
+      // The 1.x internals lean on `any`; tightened as modules are rewritten for 2.0.
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/ban-ts-comment": [
+        "error",
+        { "ts-nocheck": "allow-with-description", "ts-expect-error": "allow-with-description" },
+      ],
+    },
+  },
+  {
+    // create-kaelum and config files are still plain CommonJS / Node scripts.
+    files: ["packages/create-kaelum/**/*.js"],
+    languageOptions: { sourceType: "commonjs" },
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
+  {
+    files: ["packages/kaelum/test/**"],
+    languageOptions: { globals: globals.vitest },
+  },
+);

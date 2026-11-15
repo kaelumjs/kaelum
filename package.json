@@ -8,7 +8,10 @@
     "node": ">=24.22.1"
   },
   "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
+    "test:dist": "pnpm -r test:dist",
     "test:coverage": "pnpm -r test:coverage",
     "lint": "eslint .",
     "format": "prettier --write ."
@@ -17,6 +20,9 @@
     "@eslint/js": "^10.0.0",
     "eslint": "10.6.0",
     "eslint-config-prettier": "10.1.8",
-    "prettier": "3.9.3"
+    "globals": "^17.14.0",
+    "prettier": "3.9.3",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.2"
   }
 }

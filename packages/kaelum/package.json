@@ -2,24 +2,34 @@
   "name": "kaelum",
   "version": "1.10.4",
   "description": "A minimalist Node.js framework for building web pages and APIs with simplicity and speed.",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./index.mjs",
-      "require": "./index.js"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./validate": {
-      "require": "./validate.js"
+      "types": "./dist/validate.d.ts",
+      "default": "./dist/validate.js"
     },
     "./test": {
-      "require": "./test.js"
+      "types": "./dist/test.d.ts",
+      "default": "./dist/test.js"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --verbose",
-    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
-    "prepack": "node -e \"const fs=require('fs');for(const f of ['README.md','LICENSE'])fs.copyFileSync('../../'+f,f)\""
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:dist": "node --test \"test-dist/*.test.mjs\"",
+    "prepack": "pnpm build && node -e \"const fs=require('fs');for(const f of ['README.md','LICENSE'])fs.copyFileSync('../../'+f,f)\""
   },
   "funding": {
     "type": "ko-fi",
@@ -57,14 +67,11 @@
     "morgan": "1.12.1"
   },
   "devDependencies": {
-    "jest": "30.4.2",
-    "supertest": "7.2.2"
-  },
-  "jest": {
-    "testPathIgnorePatterns": [
-      "/node_modules/",
-      "^.*/validate\\.js$",
-      "^.*/test\\.js$"
-    ]
+    "@types/express": "^4.17.21",
+    "@types/node": "^24.0.0",
+    "@vitest/coverage-v8": "^5.1.0",
+    "supertest": "7.2.2",
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.0"
   }
 }
