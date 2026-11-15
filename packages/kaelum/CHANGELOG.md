@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.0.0-alpha.1](https://github.com/kaelumjs/kaelum/compare/kaelum-v2.0.0-alpha.0...kaelum-v2.0.0-alpha.1) (2026-11-15)
+
+
+### Features
+
+* add app options with production-ready defaults ([f0cb3a3](https://github.com/kaelumjs/kaelum/commit/f0cb3a3cdbb9f5a02a6e4ae5c892d7880010c36c))
+* add app options with production-ready defaults ([#91](https://github.com/kaelumjs/kaelum/issues/91)) ([f1a313d](https://github.com/kaelumjs/kaelum/commit/f1a313d39a390ad37a066e5767462a3385f1b9de))
+* add rate limit, CSRF, IP restriction and timing options ([e6aa89b](https://github.com/kaelumjs/kaelum/commit/e6aa89ba6d338272c8d58a3ba0bc8b402d63fc13))
+* add rate limit, CSRF, IP restriction and timing options ([#92](https://github.com/kaelumjs/kaelum/issues/92)) ([e43a5a1](https://github.com/kaelumjs/kaelum/commit/e43a5a1f3672aeb4a1a4c269c49b7dfb1852181d))
+* add the k schema builder ([9cef147](https://github.com/kaelumjs/kaelum/commit/9cef1476e8200d824ed6e652ee110b1ec0683aac))
+* add the k schema builder ([#90](https://github.com/kaelumjs/kaelum/issues/90)) ([04f952f](https://github.com/kaelumjs/kaelum/commit/04f952fe1e4532e46105c8dfaa9018c33873442c))
+* add the Kaelum class, Context and typed route trees ([b35856d](https://github.com/kaelumjs/kaelum/commit/b35856d0641922b8c0b2690cb52edfb58ec5060a))
+* add the Kaelum class, Context and typed route trees ([c1f474f](https://github.com/kaelumjs/kaelum/commit/c1f474f138244836d4f25e0aca7d1159e66f430c))
+* validate and type endpoint input with Standard Schema ([ff234c7](https://github.com/kaelumjs/kaelum/commit/ff234c745e86ff74e09d4fd37f80b02fd0037198))
+* validate and type endpoint input with Standard Schema ([#89](https://github.com/kaelumjs/kaelum/issues/89)) ([23f9606](https://github.com/kaelumjs/kaelum/commit/23f96066a25b23cf52ff912a8b0dc84f8786d511))
+
 ## [2.0.0-alpha.0](https://github.com/kaelumjs/kaelum/compare/kaelum-v1.10.4...kaelum-v2.0.0-alpha.0) (2026-11-15)
 
 
