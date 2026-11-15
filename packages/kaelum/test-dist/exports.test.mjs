@@ -31,3 +31,15 @@ test("subpaths: kaelum/validate and kaelum/test", async () => {
   const { testApp } = await import("kaelum/test");
   assert.equal(typeof testApp, "function");
 });
+
+test("ESM: the 2.0 API is exported by name", async () => {
+  const { createKaelum, defineRoutes, HttpError, Kaelum, Context } = await import("kaelum");
+
+  const app = createKaelum();
+  assert.ok(app instanceof Kaelum);
+  assert.equal(typeof Context, "function");
+  assert.equal(new HttpError(404).status, 404);
+
+  app.route(defineRoutes("/ping")({ get: () => "pong" }));
+  assert.deepEqual(app.routes(), [{ method: "GET", path: "/ping" }]);
+});
