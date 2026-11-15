@@ -38,12 +38,31 @@ function timing(app: Express, options: TimingOptions = {}) {
     return app;
   }
 
+  const middleware = serverTiming(options) as ReturnType<typeof serverTiming> & { _kaelum_name?: string };
+
+  // Tag the middleware for identification
+  middleware._kaelum_name = "timing";
+
+  app.use(middleware);
+
+  // Mark as installed
+  if (!app.locals) app.locals = {};
+  app.locals._kaelum_timing_installed = true;
+
+  return app;
+}
+
+/**
+ * The Server-Timing middleware on its own: adds `Server-Timing: total;dur=<ms>`
+ * to every response, measured from when the request reached this middleware.
+ */
+function serverTiming(options: TimingOptions = {}) {
   const headerName = options.headerName || DEFAULTS.headerName;
   const precision = typeof options.precision === "number"
     ? options.precision
     : DEFAULTS.precision;
 
-  const middleware = (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     const start = process.hrtime.bigint();
 
     // Override writeHead to inject the timing header before headers are sent
@@ -63,17 +82,8 @@ function timing(app: Express, options: TimingOptions = {}) {
 
     next();
   };
-
-  // Tag the middleware for identification
-  middleware._kaelum_name = "timing";
-
-  app.use(middleware);
-
-  // Mark as installed
-  if (!app.locals) app.locals = {};
-  app.locals._kaelum_timing_installed = true;
-
-  return app;
 }
+
+export { serverTiming };
 
 export default timing;

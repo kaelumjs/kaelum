@@ -55,7 +55,7 @@ describe("core/ipRestriction", () => {
       // supertest connects from 127.0.0.1 which matches 0.0.0.0/0
       const res = await request(app).get("/blocked");
       expect(res.status).toBe(403);
-      expect(res.body.error).toBe("Forbidden");
+      expect(res.body.error.code).toBe("IP_NOT_ALLOWED");
     });
 
     it("accepts a custom onDenied handler", async () => {

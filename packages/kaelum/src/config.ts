@@ -1,5 +1,22 @@
 import type { HelmetOptions } from "helmet";
 import type { RequestLogFormat } from "./core/requestLogger.js";
+import type { CsrfOptions, IpRestrictionOptions, RateLimitConfig, TimingOptions } from "./types.js";
+
+export type { IpRestrictionOptions, TimingOptions };
+
+/** Rate limiting options. */
+export type RateLimitOptions = RateLimitConfig;
+
+/** CSRF protection options. */
+export interface CsrfConfig extends CsrfOptions {
+  /**
+   * - `"origin"` (default): reject state-changing requests whose `Origin` or
+   *   `Referer` is not allowed. Needs nothing from the client.
+   * - `"token"`: double-submit cookie. The client must echo the `csrf-token`
+   *   cookie in the `X-CSRF-Token` header.
+   */
+  strategy?: "origin" | "token";
+}
 
 /** Options for cross-origin requests. Passed to the `cors` package. */
 export interface CorsOptions {
@@ -53,6 +70,16 @@ export interface KaelumOptions {
     helmet?: boolean | HelmetOptions;
     /** Cross-origin requests. Default off. `true` allows any origin, an object configures. */
     cors?: boolean | CorsOptions;
+    /**
+     * Limit requests per client for the whole app. Default off. `true` allows
+     * 100 requests per 15 minutes per IP. Behind a proxy, set `trustProxy` too,
+     * or every client shares the proxy's IP. For one route, use `rateLimit()` in `use`.
+     */
+    rateLimit?: boolean | RateLimitOptions;
+    /** CSRF protection for state-changing requests. Default off. `true` uses the origin check. */
+    csrf?: boolean | CsrfConfig;
+    /** Allow or deny clients by IP or CIDR range. `allow` always wins over `deny`. */
+    ipRestriction?: IpRestrictionOptions;
   };
 
   observability?: {
@@ -63,6 +90,8 @@ export interface KaelumOptions {
      * `"tiny"` in production, off when `NODE_ENV` is `test`.
      */
     logs?: boolean | RequestLogFormat;
+    /** `Server-Timing` header with the time spent handling each request. Default off. */
+    timing?: boolean | TimingOptions;
   };
 
   /** Body parsing. `false` disables it entirely. */
@@ -89,6 +118,10 @@ export interface KaelumOptions {
 export interface ResolvedOptions {
   helmet: false | HelmetOptions;
   cors: false | CorsOptions;
+  rateLimit: false | RateLimitOptions;
+  csrf: false | CsrfConfig;
+  ipRestriction: false | IpRestrictionOptions;
+  timing: false | TimingOptions;
   requestId: false | Required<RequestIdOptions>;
   logs: false | RequestLogFormat;
   body: false | Required<BodyOptions>;
@@ -124,6 +157,10 @@ export function resolveOptions(options: KaelumOptions = {}, env = process.env.NO
   return {
     helmet: toggle<HelmetOptions>(security.helmet, true),
     cors: toggle<CorsOptions>(security.cors, false),
+    rateLimit: toggle<RateLimitOptions>(security.rateLimit, false),
+    csrf: toggle<CsrfConfig>(security.csrf, false),
+    ipRestriction: security.ipRestriction ?? false,
+    timing: toggle<TimingOptions>(observability.timing, false),
     requestId: requestId && {
       header: requestId.header ?? "X-Request-Id",
       generate: requestId.generate ?? (() => crypto.randomUUID()),

@@ -17,10 +17,15 @@ export { Kaelum, createKaelum, defineRoutes } from "./app.js";
 export type {
   BodyOptions,
   CorsOptions,
+  CsrfConfig,
   HealthOptions,
   KaelumOptions,
+  RateLimitOptions,
   RequestIdOptions,
 } from "./config.js";
+// Middleware factories, for `app.use()` or a single route's `use`.
+export { createRateLimiter as rateLimit } from "./core/rateLimit.js";
+export { ipRestriction } from "./core/ipRestriction.js";
 export { Context } from "./context.js";
 export type { ContextRequest, ContextResponse, Responded } from "./context.js";
 export { HttpError } from "./http-error.js";
