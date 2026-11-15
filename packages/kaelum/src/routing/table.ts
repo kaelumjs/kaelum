@@ -1,10 +1,11 @@
 import type { NextFunction, Request, Response, Router } from "express";
 import { Context, RESPONDED } from "../context.js";
 import { HttpError } from "../http-error.js";
+import { validateInput } from "../schema/validate.js";
 import type { FlatRoute } from "./tree.js";
 import type { Method, Middleware, RouteInfo } from "./types.js";
 
-type Endpoint = Pick<FlatRoute, "middleware" | "handler">;
+type Endpoint = Pick<FlatRoute, "middleware" | "schemas" | "handler">;
 
 /**
  * Kaelum's own record of every route.
@@ -36,7 +37,11 @@ export class RouteTable {
       throw new Error(`route ${route.method.toUpperCase()} ${route.path} is already registered`);
     }
 
-    methods.set(route.method, { middleware: route.middleware, handler: route.handler });
+    methods.set(route.method, {
+      middleware: route.middleware,
+      schemas: route.schemas,
+      handler: route.handler,
+    });
   }
 
   list(): RouteInfo[] {
@@ -108,7 +113,12 @@ function runMiddleware(
 
 async function runHandler(endpoint: Endpoint, req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const result = await endpoint.handler(new Context(req, res));
+    // Validation runs after the middleware, so auth can reject before the body is inspected.
+    const validated = endpoint.schemas
+      ? await validateInput(endpoint.schemas, { params: req.params, query: req.query, body: req.body })
+      : undefined;
+
+    const result = await endpoint.handler(new Context(req, res, validated));
     sendResult(result, res);
   } catch (err) {
     next(err);
