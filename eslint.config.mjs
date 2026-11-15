@@ -54,7 +54,7 @@ export default [
     ignores: [
       "**/node_modules/",
       "**/coverage/",
-      "**/cli/templates/",
+      "packages/create-kaelum/templates/",
       "apps/",
       "*.config.js",
       "*.config.mjs",
