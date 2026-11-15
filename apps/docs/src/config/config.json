@@ -1,0 +1,29 @@
+{
+  "site": {
+    "title": "Kaelum",
+    "logo": "/src/assets/logo-light.svg",
+    "logo_darkmode": "/src/assets/logo-dark.svg",
+    "logo_width": "32",
+    "logo_height": "32",
+    "logo_text": "Kaelum"
+  },
+
+  "settings": {
+    "search": true,
+    "theme_switcher": true
+  },
+
+  "params": {
+    "footer_contact": {
+      "enable": true,
+      "action": "https://github.com/kaelumjs/kaelum/issues/new"
+    },
+    "copyright": "Copyright &copy; 2025 <a class=\"text-primary hover:underline no-underline\" href=\"https://github.com/kaelumjs\" target=\"_blank\" rel=\"noopener\" aria-label=\"KaelumJS\">KaelumJS</a>. Released under the MIT License."
+  },
+
+  "navigation_button": {
+    "enable": true,
+    "label": "Get Started",
+    "link": "/getting-started/introduction/overview/"
+  }
+}

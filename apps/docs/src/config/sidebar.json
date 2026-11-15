@@ -1,0 +1,38 @@
+{
+  "main": [
+    {
+      "label": "Getting Started",
+      "items": [
+        {
+          "label": "[seti:vite] Introduction",
+          "autogenerate": { "directory": "getting-started/introduction" }
+        },
+        {
+          "label": "[setting] Configuration",
+          "autogenerate": { "directory": "getting-started/configuration" }
+        }
+      ]
+    },
+    {
+      "label": "Guide",
+      "items": [
+        {
+          "label": "[document] Core Functions",
+          "autogenerate": { "directory": "guide/core-functions" }
+        },
+        {
+          "label": "[rocket] Features",
+          "autogenerate": { "directory": "guide/features" }
+        }
+      ]
+    },
+    {
+      "label": "API Reference",
+      "autogenerate": { "directory": "api-reference" }
+    },
+    {
+      "label": "Examples",
+      "autogenerate": { "directory": "examples" }
+    }
+  ]
+}
