@@ -43,3 +43,18 @@ test("ESM: the 2.0 API is exported by name", async () => {
   app.route(defineRoutes("/ping")({ get: () => "pong" }));
   assert.deepEqual(app.routes(), [{ method: "GET", path: "/ping" }]);
 });
+
+test("subpath: kaelum/testing drives a 2.0 app", async () => {
+  const { createKaelum } = await import("kaelum");
+  const { testApp } = await import("kaelum/testing");
+
+  const app = createKaelum({ shutdown: false });
+  app.resource("/users", { get: (c) => ({ id: c.params.id }) });
+
+  const client = testApp(app);
+  const res = await client.get("/users/7");
+  await client.close();
+
+  assert.equal(res.status, 200);
+  assert.deepEqual(res.body, { id: "7" });
+});

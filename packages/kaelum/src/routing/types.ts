@@ -67,7 +67,7 @@ export interface EndpointObject<P extends string = string, E = unknown> {
  * fallback branch; testing for a function first breaks inference of `c` for
  * every plain handler.
  */
-type Endpoint<E, P extends string> = E extends { handler: unknown }
+export type Endpoint<E, P extends string> = E extends { handler: unknown }
   ? EndpointObject<P, E>
   : E extends object
     ? E extends (...args: never[]) => unknown
@@ -101,6 +101,49 @@ type Shape<V, K, P extends string> = K extends `/${string}`
  * object literal; the intersection with `Shape` is what gives `c` its type.
  */
 export type RouteTree<T, P extends string> = { [K in keyof T]: T[K] & Shape<T[K], K, P> };
+
+type UnknownResourceKey<K> = K extends string
+  ? `Unknown key "${K}": expected list, get, create, update, replace, remove or "use"`
+  : never;
+
+// The first branch never matches. It is there because TypeScript only infers
+// the schemas of an endpoint object through a mapped type whose shape refers
+// back to the mapped type, as `RouteTree` does; without it `c.body` is lost.
+type ResourceShape<V, K, P extends string> = [K] extends [never]
+  ? ResourceActions<V, P>
+  : K extends "list" | "create"
+    ? Endpoint<V, P>
+    : K extends "get" | "update" | "replace" | "remove"
+      ? Endpoint<V, `${P}/:id`>
+      : K extends "use"
+        ? Middleware[]
+        : UnknownResourceKey<K>;
+
+/**
+ * The actions of a CRUD resource at path `P`, for `app.resource()`.
+ *
+ * | key       | route             |
+ * | --------- | ----------------- |
+ * | `list`    | `GET P`           |
+ * | `create`  | `POST P`          |
+ * | `get`     | `GET P/:id`       |
+ * | `update`  | `PATCH P/:id`     |
+ * | `replace` | `PUT P/:id`       |
+ * | `remove`  | `DELETE P/:id`    |
+ *
+ * Every action is optional and takes a handler or an endpoint object, as in a
+ * route tree. `use` is middleware for all of them.
+ */
+export type ResourceActions<T, P extends string> = { [K in keyof T]: T[K] & ResourceShape<T[K], K, P> };
+
+// Same trick as `ResourceShape`: the recursive branch is what keeps inference working.
+type SingleShape<V, K, P extends string> = [K] extends [never] ? SingleEndpoint<V, P> : Endpoint<V, P>;
+
+/**
+ * The endpoint argument of `app.get()`, `app.post()` and the other shortcuts,
+ * as a one-element tuple: a handler or an endpoint object for path `P`.
+ */
+export type SingleEndpoint<T, P extends string> = { [K in keyof T]: T[K] & SingleShape<T[K], K, P> };
 
 /** A route tree bound to its full path, created by `defineRoutes`. */
 export interface DefinedRoutes<P extends string = string> {

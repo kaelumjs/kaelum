@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response, Router } from "express";
 import { Context, RESPONDED } from "../context.js";
 import { HttpError } from "../http-error.js";
+import type { LogSink } from "../logger.js";
 import { validateInput } from "../schema/validate.js";
 import type { FlatRoute } from "./tree.js";
 import type { Method, Middleware, RouteInfo } from "./types.js";
@@ -18,7 +19,10 @@ type Endpoint = Pick<FlatRoute, "middleware" | "schemas" | "handler">;
 export class RouteTable {
   #paths = new Map<string, Map<Method, Endpoint>>();
 
-  constructor(private readonly router: Router) {}
+  constructor(
+    private readonly router: Router,
+    private readonly sink?: LogSink
+  ) {}
 
   has(method: Method, path: string): boolean {
     return this.#paths.get(path)?.has(method) ?? false;
@@ -73,7 +77,7 @@ export class RouteTable {
 
       runMiddleware(endpoint.middleware, req, res, (err) => {
         if (err !== undefined) return next(err);
-        void runHandler(endpoint, req, res, next);
+        void runHandler(endpoint, req, res, next, this.sink);
       });
     };
   }
@@ -111,14 +115,20 @@ function runMiddleware(
   step();
 }
 
-async function runHandler(endpoint: Endpoint, req: Request, res: Response, next: NextFunction): Promise<void> {
+async function runHandler(
+  endpoint: Endpoint,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+  sink: LogSink | undefined
+): Promise<void> {
   try {
     // Validation runs after the middleware, so auth can reject before the body is inspected.
     const validated = endpoint.schemas
       ? await validateInput(endpoint.schemas, { params: req.params, query: req.query, body: req.body })
       : undefined;
 
-    const result = await endpoint.handler(new Context(req, res, validated));
+    const result = await endpoint.handler(new Context(req, res, validated, sink));
     sendResult(result, res);
   } catch (err) {
     next(err);

@@ -1,5 +1,6 @@
 import type { HelmetOptions } from "helmet";
 import type { RequestLogFormat } from "./core/requestLogger.js";
+import { defaultLogSink, type LogSink } from "./logger.js";
 import type { CsrfOptions, IpRestrictionOptions, RateLimitConfig, TimingOptions } from "./types.js";
 
 export type { IpRestrictionOptions, TimingOptions };
@@ -48,6 +49,13 @@ export interface HealthOptions {
   check?: () => unknown;
 }
 
+export interface ShutdownOptions {
+  /** Milliseconds to wait for open requests before closing their connections. Default 10000. */
+  timeout?: number;
+  /** Signals that start the shutdown. Default `SIGTERM` and `SIGINT`. */
+  signals?: NodeJS.Signals[];
+}
+
 export interface BodyOptions {
   /** Largest accepted body, as bytes or a string such as `"1mb"`. Default `"100kb"`. */
   limit?: number | string;
@@ -92,7 +100,18 @@ export interface KaelumOptions {
     logs?: boolean | RequestLogFormat;
     /** `Server-Timing` header with the time spent handling each request. Default off. */
     timing?: boolean | TimingOptions;
+    /**
+     * Where `app.log` and `c.log` write. Default: JSON lines in production,
+     * the console otherwise. Pass a function to forward records to your own logger.
+     */
+    logger?: LogSink;
   };
+
+  /**
+   * Graceful shutdown on `SIGTERM` and `SIGINT`: stop accepting connections,
+   * let open requests finish, run the `onClose` hooks, then exit. Default on.
+   */
+  shutdown?: boolean | ShutdownOptions;
 
   /** Body parsing. `false` disables it entirely. */
   body?: false | BodyOptions;
@@ -124,6 +143,8 @@ export interface ResolvedOptions {
   timing: false | TimingOptions;
   requestId: false | Required<RequestIdOptions>;
   logs: false | RequestLogFormat;
+  logger: LogSink;
+  shutdown: false | Required<ShutdownOptions>;
   body: false | Required<BodyOptions>;
   query: "simple" | "extended";
   trustProxy: boolean | number | string | string[];
@@ -146,6 +167,7 @@ export function resolveOptions(options: KaelumOptions = {}, env = process.env.NO
   const { security = {}, observability = {} } = options;
 
   const requestId = toggle<RequestIdOptions>(observability.requestId, true);
+  const shutdown = toggle<ShutdownOptions>(options.shutdown, true);
   const body = options.body === false ? false : (options.body ?? {});
   const health = typeof options.health === "string" ? { path: options.health } : toggle(options.health, true);
 
@@ -166,6 +188,11 @@ export function resolveOptions(options: KaelumOptions = {}, env = process.env.NO
       generate: requestId.generate ?? (() => crypto.randomUUID()),
     },
     logs,
+    logger: observability.logger ?? defaultLogSink(env),
+    shutdown: shutdown && {
+      timeout: shutdown.timeout ?? 10_000,
+      signals: shutdown.signals ?? ["SIGTERM", "SIGINT"],
+    },
     body: body && {
       limit: body.limit ?? "100kb",
       json: body.json ?? true,

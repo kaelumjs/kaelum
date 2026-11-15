@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { errorBody } from "./http-error.js";
+import { createLogger, defaultLogSink, type LogSink, type Logger } from "./logger.js";
 import type { ParamsOf } from "./routing/types.js";
 import type { ValidatedInput } from "./schema/validate.js";
 
@@ -38,15 +39,30 @@ export class Context<
 
   #vars = new Map<string, unknown>();
   #validated: ValidatedInput;
+  #sink: LogSink;
+  #log: Logger | undefined;
 
   /**
    * @param validated - output of the endpoint's schemas; a source listed here
    *   replaces the raw value from the request
+   * @param sink - where `c.log` writes
    */
-  constructor(req: Request, res: Response, validated: ValidatedInput = {}) {
+  constructor(req: Request, res: Response, validated: ValidatedInput = {}, sink: LogSink = defaultLogSink()) {
     this.req = new ContextRequest(req);
     this.res = new ContextResponse(res);
     this.#validated = validated;
+    this.#sink = sink;
+  }
+
+  /**
+   * A logger for this request. Every record carries the request ID, so the
+   * lines of one request can be found together.
+   *
+   * @example
+   * c.log.info("order created", { orderId: order.id });
+   */
+  get log(): Logger {
+    return (this.#log ??= createLogger(this.#sink, this.id));
   }
 
   /** Path params, typed from the route path, or from the `params` schema when there is one. */

@@ -13,6 +13,8 @@
     "test/schema.test.ts",
     "test/k.test.ts",
     "test/config.test.ts",
-    "test/security.test.ts"
+    "test/security.test.ts",
+    "test/app-extras.test.ts",
+    "test/testing.test.ts"
   ]
 }

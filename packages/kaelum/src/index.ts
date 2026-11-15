@@ -14,6 +14,7 @@ export type * from "./types.js";
 // --- 2.0 API (in progress) --------------------------------------------------
 // Lives next to the 1.x factory above until it replaces it as the default export.
 export { Kaelum, createKaelum, defineRoutes } from "./app.js";
+export type { CloseHook, Plugin } from "./app.js";
 export type {
   BodyOptions,
   CorsOptions,
@@ -22,7 +23,9 @@ export type {
   KaelumOptions,
   RateLimitOptions,
   RequestIdOptions,
+  ShutdownOptions,
 } from "./config.js";
+export type { LogEntry, LogLevel, LogSink, Logger } from "./logger.js";
 // Middleware factories, for `app.use()` or a single route's `use`.
 export { createRateLimiter as rateLimit } from "./core/rateLimit.js";
 export { ipRestriction } from "./core/ipRestriction.js";
@@ -41,6 +44,8 @@ export type {
   Method,
   Middleware,
   ParamsOf,
+  ResourceActions,
   RouteInfo,
   RouteTree,
+  SingleEndpoint,
 } from "./routing/types.js";
