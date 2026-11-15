@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
 import type { Context } from "../context.js";
+import type { StandardSchemaV1 } from "../schema/standard.js";
 
 export const METHODS = ["get", "post", "put", "patch", "delete", "head", "options"] as const;
 
@@ -28,11 +29,34 @@ export type ParamsOf<P extends string> = string extends P
 /** A route handler. Return a value to send it, or use the `c.*` helpers. */
 export type Handler<P extends string = string> = (c: Context<P>) => unknown;
 
-/** An endpoint written as an object, for when it needs its own middleware. */
-export interface EndpointObject<P extends string = string> {
+type SchemaOf<E, Key extends string> = E extends { [K in Key]: infer S } ? S : undefined;
+
+// Tuple-wrapped so a missing schema (`undefined`) picks the fallback instead of distributing.
+type OutputOf<S, Fallback> = [S] extends [StandardSchemaV1<unknown, infer Output>] ? Output : Fallback;
+
+/**
+ * An endpoint written as an object, for when it validates its input or needs
+ * its own middleware. Schemas can come from any Standard Schema library.
+ *
+ * @typeParam E - the object literal itself; the schemas found in it type `c`
+ */
+export interface EndpointObject<P extends string = string, E = unknown> {
+  /** Validates the request body. Its output becomes `c.body`. */
+  body?: StandardSchemaV1;
+  /** Validates the query string. Its output becomes `c.query`. */
+  query?: StandardSchemaV1;
+  /** Validates the path params. Its output becomes `c.params`. */
+  params?: StandardSchemaV1;
   /** Express middleware that runs only for this endpoint, after the tree's `use`. */
   use?: Middleware[];
-  handler: Handler<P>;
+  handler: (
+    c: Context<
+      P,
+      OutputOf<SchemaOf<E, "body">, unknown>,
+      OutputOf<SchemaOf<E, "query">, Context<P>["query"]>,
+      OutputOf<SchemaOf<E, "params">, ParamsOf<P>>
+    >
+  ) => unknown;
 }
 
 /**
@@ -44,11 +68,11 @@ export interface EndpointObject<P extends string = string> {
  * every plain handler.
  */
 type Endpoint<E, P extends string> = E extends { handler: unknown }
-  ? EndpointObject<P>
+  ? EndpointObject<P, E>
   : E extends object
     ? E extends (...args: never[]) => unknown
       ? Handler<P>
-      : EndpointObject<P>
+      : EndpointObject<P, E>
     : Handler<P>;
 
 type UnknownKey<K> = K extends string

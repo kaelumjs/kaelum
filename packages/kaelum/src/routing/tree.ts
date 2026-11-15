@@ -1,3 +1,5 @@
+import { isStandardSchema } from "../schema/standard.js";
+import type { EndpointSchemas, ValidationSource } from "../schema/validate.js";
 import { METHODS, type Handler, type Method, type Middleware } from "./types.js";
 
 /** One endpoint found while walking a route tree. */
@@ -6,8 +8,13 @@ export interface FlatRoute {
   path: string;
   /** Middleware from every enclosing `use`, outermost first, then the endpoint's own. */
   middleware: Middleware[];
+  /** Schemas declared on the endpoint; absent when it declares none. */
+  schemas?: EndpointSchemas;
   handler: Handler;
 }
+
+const SCHEMA_KEYS: readonly ValidationSource[] = ["params", "query", "body"];
+const ENDPOINT_KEYS: ReadonlySet<string> = new Set([...SCHEMA_KEYS, "use", "handler"]);
 
 const METHOD_SET: ReadonlySet<string> = new Set(METHODS);
 
@@ -69,8 +76,33 @@ function toRoute(method: Method, path: string, value: unknown, inherited: Middle
     if (typeof value.handler !== "function") {
       throw new TypeError(`${where}: endpoint object needs a "handler" function`);
     }
+    const unknown = Object.keys(value).find((key) => !ENDPOINT_KEYS.has(key));
+    if (unknown !== undefined) {
+      throw new TypeError(
+        `${where}: unknown endpoint key "${unknown}". Expected ${[...ENDPOINT_KEYS].join(", ")}`
+      );
+    }
+
     const own = value.use === undefined ? [] : toMiddleware(value.use, `${where}: "use"`);
-    return { method, path, middleware: [...inherited, ...own], handler: value.handler as Handler };
+    const route: FlatRoute = {
+      method,
+      path,
+      middleware: [...inherited, ...own],
+      handler: value.handler as Handler,
+    };
+
+    for (const key of SCHEMA_KEYS) {
+      const schema = value[key];
+      if (schema === undefined) continue;
+      if (!isStandardSchema(schema)) {
+        throw new TypeError(
+          `${where}: "${key}" must be a Standard Schema (Zod, Valibot, ArkType, ...), got ${describe(schema)}`
+        );
+      }
+      (route.schemas ??= {})[key] = schema;
+    }
+
+    return route;
   }
 
   throw new TypeError(`${where}: expected a handler function or an endpoint object, got ${describe(value)}`);

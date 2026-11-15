@@ -18,6 +18,8 @@ export { Context } from "./context.js";
 export type { ContextRequest, ContextResponse, Responded } from "./context.js";
 export { HttpError } from "./http-error.js";
 export type { ErrorBody, HttpErrorOptions } from "./http-error.js";
+export type { InferOutput, StandardSchemaV1 } from "./schema/standard.js";
+export type { ValidationIssue, ValidationSource } from "./schema/validate.js";
 export type {
   DefinedRoutes,
   EndpointObject,

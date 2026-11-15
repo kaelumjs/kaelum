@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { errorBody } from "./http-error.js";
 import type { ParamsOf } from "./routing/types.js";
+import type { ValidatedInput } from "./schema/validate.js";
 
 declare const responded: unique symbol;
 
@@ -20,33 +21,50 @@ export const RESPONDED = Object.freeze({}) as Responded;
  * The single argument of every Kaelum handler.
  *
  * @typeParam P - the route path, used to type `c.params`
+ * @typeParam Body - type of `c.body`; comes from the endpoint's `body` schema
+ * @typeParam Query - type of `c.query`; comes from the endpoint's `query` schema
+ * @typeParam Params - type of `c.params`; the path's params unless a `params` schema says otherwise
  */
-export class Context<P extends string = string> {
+export class Context<
+  P extends string = string,
+  Body = unknown,
+  Query = Request["query"],
+  Params = ParamsOf<P>,
+> {
   /** Request helpers, plus the Express request as `c.req.raw`. */
   readonly req: ContextRequest;
   /** Response helpers, plus the Express response as `c.res.raw`. */
   readonly res: ContextResponse;
 
   #vars = new Map<string, unknown>();
+  #validated: ValidatedInput;
 
-  constructor(req: Request, res: Response) {
+  /**
+   * @param validated - output of the endpoint's schemas; a source listed here
+   *   replaces the raw value from the request
+   */
+  constructor(req: Request, res: Response, validated: ValidatedInput = {}) {
     this.req = new ContextRequest(req);
     this.res = new ContextResponse(res);
+    this.#validated = validated;
   }
 
-  /** Path params, typed from the route path. */
-  get params(): ParamsOf<P> {
-    return this.req.raw.params as ParamsOf<P>;
+  /** Path params, typed from the route path, or from the `params` schema when there is one. */
+  get params(): Params {
+    return ("params" in this.#validated ? this.#validated.params : this.req.raw.params) as Params;
   }
 
-  /** Parsed query string. */
-  get query(): Request["query"] {
-    return this.req.raw.query;
+  /** Query string: the `query` schema's output when there is one, the parsed query otherwise. */
+  get query(): Query {
+    return ("query" in this.#validated ? this.#validated.query : this.req.raw.query) as Query;
   }
 
-  /** Parsed request body, or `undefined` when the request has none. */
-  get body(): unknown {
-    return this.req.raw.body;
+  /**
+   * Request body: the `body` schema's output when there is one. Without a
+   * schema it is whatever the body parser produced, typed `unknown`.
+   */
+  get body(): Body {
+    return ("body" in this.#validated ? this.#validated.body : this.req.raw.body) as Body;
   }
 
   /** Request headers, with lower-case names. */
