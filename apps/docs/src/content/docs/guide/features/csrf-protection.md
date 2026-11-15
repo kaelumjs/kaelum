@@ -7,8 +7,9 @@ sidebar:
 
 Kaelum ships built-in CSRF (Cross-Site Request Forgery) protection with two complementary modes — **zero dependencies**, using only Node.js's native `crypto` module.
 
-> [!NOTE]
-> **Safe methods** (`GET`, `HEAD`, `OPTIONS`) are always exempt from CSRF checks per [RFC 7231](https://www.rfc-editor.org/rfc/rfc7231#section-4.2.1). Only mutating methods (`POST`, `PUT`, `PATCH`, `DELETE`) are validated.
+:::note
+**Safe methods** (`GET`, `HEAD`, `OPTIONS`) are always exempt from CSRF checks per [RFC 7231](https://www.rfc-editor.org/rfc/rfc7231#section-4.2.1). Only mutating methods (`POST`, `PUT`, `PATCH`, `DELETE`) are validated.
+:::
 
 ## Mode 1 — Origin Check (recommended for APIs)
 
