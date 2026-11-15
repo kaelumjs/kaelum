@@ -1,4 +1,4 @@
 {
-  "packages/kaelum": "1.10.4",
-  "packages/create-kaelum": "1.10.4"
+  "packages/kaelum": "2.0.0-alpha.0",
+  "packages/create-kaelum": "2.0.0-alpha.0"
 }

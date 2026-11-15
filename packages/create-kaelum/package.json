@@ -1,6 +1,6 @@
 {
   "name": "create-kaelum",
-  "version": "1.10.4",
+  "version": "2.0.0-alpha.0",
   "description": "Scaffold a new Kaelum project.",
   "type": "commonjs",
   "bin": {
