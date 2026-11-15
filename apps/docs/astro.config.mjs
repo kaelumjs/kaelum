@@ -1,71 +1,98 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
-import { viewTransitions } from "astro-vtbot/starlight-view-transitions";
+import starlightLlmsTxt from "starlight-llms-txt";
+import starlightChangelogs, { makeChangelogsSidebarLinks } from "starlight-changelogs";
+import { markdownPageIndex } from "./src/lib/llms-index.mjs";
 
-import tailwindcss from "@tailwindcss/vite";
-import config from "./src/config/config.json" assert { type: "json" };
-import social from "./src/config/social.json";
-import locals from "./src/config/locals.json";
-import sidebar from "./src/config/sidebar.json";
-
-import { fileURLToPath } from "url";
-
-const { site } = config;
-const { title, logo, logo_darkmode } = site;
-
-export const locales = locals
-
+const site = "https://kaelumjs.matthcodes.dev";
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://kaelumjs.matthcodes.dev",
-  image: {
-    service: { entrypoint: "astro/assets/services/noop" },
-  },
+  site,
   integrations: [
     starlight({
-      title,
-      description: "KaelumJS - A minimalist Node.js framework for building web pages and APIs with simplicity and speed.",
-      head: [
-        { tag: "meta", attrs: { name: "author", content: "Matheus Campagnolo" } },
-        { tag: "meta", attrs: { name: "keywords", content: "Kaelum, KaelumJS, Node.js, Express, framework, backend, minimalist, API, Matheus Campagnolo" } },
-        { tag: "meta", attrs: { property: "og:type", content: "website" } }
-      ],
+      title: "Kaelum",
+      description:
+        "Kaelum is a minimalist Node.js framework for building web apps and REST APIs on top of Express.",
       logo: {
-        light: logo,
-        dark: logo_darkmode,
-        alt: "Kaelum Logo",
+        light: "./src/assets/logo-light.svg",
+        dark: "./src/assets/logo-dark.svg",
+        alt: "Kaelum logo",
       },
-      // @ts-ignore
-      social: social.main || [],
-      locales,
-      sidebar: sidebar.main || [],
-      customCss: ["./src/styles/global.css"],
+      social: [
+        {
+          icon: "github",
+          label: "GitHub",
+          href: "https://github.com/kaelumjs/kaelum",
+        },
+        {
+          icon: "npm",
+          label: "npm",
+          href: "https://www.npmjs.com/package/kaelum",
+        },
+      ],
+      editLink: {
+        baseUrl: "https://github.com/kaelumjs/kaelum/edit/main/apps/docs/",
+      },
+      customCss: ["./src/styles/custom.css"],
       components: {
-        Head: "./src/components/override-components/Head.astro",
-        Header: "./src/components/override-components/Header.astro",
-        Hero: "./src/components/override-components/Hero.astro",
-        PageFrame: "./src/components/override-components/PageFrame.astro",
-        PageSidebar: "./src/components/override-components/PageSidebar.astro",
-        TwoColumnContent: "./src/components/override-components/TwoColumnContent.astro",
-        ContentPanel: "./src/components/override-components/ContentPanel.astro",
-        Pagination: "./src/components/override-components/Pagination.astro",
-        Sidebar: "./src/components/override-components/Sidebar.astro",
-
-
+        PageTitle: "./src/components/PageTitle.astro",
       },
-
+      routeMiddleware: "./src/routeData.ts",
+      plugins: [
+        starlightLlmsTxt({
+          projectName: "Kaelum",
+          // Per-page index: every docs page is also served as raw Markdown at <url>.md
+          details: markdownPageIndex(site),
+          exclude: ["changelog/**"],
+        }),
+        starlightChangelogs(),
+      ],
+      sidebar: [
+        {
+          label: "Getting Started",
+          items: [
+            {
+              label: "Introduction",
+              items: [{ autogenerate: { directory: "getting-started/introduction" } }],
+            },
+            {
+              label: "Configuration",
+              items: [{ autogenerate: { directory: "getting-started/configuration" } }],
+            },
+          ],
+        },
+        {
+          label: "Guide",
+          items: [
+            {
+              label: "Core Functions",
+              items: [{ autogenerate: { directory: "guide/core-functions" } }],
+            },
+            {
+              label: "Features",
+              items: [{ autogenerate: { directory: "guide/features" } }],
+            },
+          ],
+        },
+        {
+          label: "API Reference",
+          collapsed: true,
+          items: [{ autogenerate: { directory: "api-reference" } }],
+        },
+        {
+          label: "Examples",
+          items: [{ autogenerate: { directory: "examples" } }],
+        },
+        {
+          label: "Changelog",
+          items: makeChangelogsSidebarLinks([
+            { type: "all", base: "changelog", label: "All versions" },
+            { type: "recent", base: "changelog", count: 3 },
+          ]),
+        },
+      ],
     }),
   ],
-  vite: {
-    // @ts-ignore
-    plugins: [tailwindcss(), viewTransitions()],
-    resolve: {
-      alias: {
-        "@": fileURLToPath(new URL("./src", import.meta.url)),
-        "~": fileURLToPath(new URL("./src", import.meta.url)),
-      },
-    },
-  },
 });

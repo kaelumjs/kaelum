@@ -7,8 +7,9 @@ sidebar:
 
 Kaelum adds **ETag header** support to enable client-side caching and conditional requests. When the browser (or API client) already has a cached copy, the server returns `304 Not Modified` instead of re-sending the full body — reducing bandwidth and latency.
 
-> [!NOTE]
-> ETag support uses **Express's native ETag engine** under the hood, ensuring full compatibility with streams and edge cases. Zero additional dependencies.
+:::note
+ETag support uses **Express's native ETag engine** under the hood, ensuring full compatibility with streams and edge cases. Zero additional dependencies.
+:::
 
 ## How ETags Work
 

@@ -1,0 +1,39 @@
+---
+import Default from "@astrojs/starlight/components/PageTitle.astro";
+import { markdownPathFor } from "../lib/markdown-route";
+
+const markdownPath = await markdownPathFor(Astro.locals.starlightRoute);
+---
+
+<Default><slot /></Default>
+
+{
+  markdownPath && (
+    <div class="page-actions">
+      <a href={markdownPath}>View as Markdown</a>
+      <button type="button" data-copy-markdown={markdownPath}>
+        Copy for AI
+      </button>
+    </div>
+  )
+}
+
+<script>
+  document.addEventListener("click", async (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLButtonElement)) return;
+    const path = target.dataset.copyMarkdown;
+    if (!path) return;
+
+    const label = target.textContent;
+    try {
+      const response = await fetch(path);
+      if (!response.ok) throw new Error(String(response.status));
+      await navigator.clipboard.writeText(await response.text());
+      target.textContent = "Copied";
+    } catch {
+      target.textContent = "Copy failed";
+    }
+    setTimeout(() => (target.textContent = label), 2000);
+  });
+</script>

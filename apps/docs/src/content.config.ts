@@ -1,36 +1,22 @@
-import { defineCollection, z } from "astro:content";
-import { docsLoader, i18nLoader } from "@astrojs/starlight/loaders";
-import { docsSchema, i18nSchema } from "@astrojs/starlight/schema";
-import { glob } from "astro/loaders";
-
-
-const ctaSection = defineCollection({
-  loader: glob({
-    pattern: "**/*.{md,mdx}",
-    base: "src/content/sections",
-  }),
-  schema: z.object({
-    title: z.string().optional(),
-    description: z.string().optional(),
-    enable: z.boolean().optional(),
-    fill_button: z.object({
-      label: z.string().optional(),
-      link: z.string().optional(),
-      enable: z.boolean().optional(),
-    }),
-    outline_button: z.object({
-      label: z.string().optional(),
-      link: z.string().optional(),
-      enable: z.boolean().optional(),
-    }),
-  }),
-});
+import { defineCollection } from "astro:content";
+import { docsLoader } from "@astrojs/starlight/loaders";
+import { docsSchema } from "@astrojs/starlight/schema";
+import { changelogsLoader } from "starlight-changelogs/loader";
 
 export const collections = {
   docs: defineCollection({
     loader: docsLoader(),
     schema: docsSchema(),
   }),
-  i18n: defineCollection({ loader: i18nLoader(), schema: i18nSchema() }),
-  ctaSection,
+  changelogs: defineCollection({
+    loader: changelogsLoader([
+      {
+        provider: "conventional-changelog",
+        base: "changelog",
+        title: "Changelog",
+        // Written by release-please; lives next to the package it describes.
+        changelog: "../../packages/kaelum/CHANGELOG.md",
+      },
+    ]),
+  }),
 };
