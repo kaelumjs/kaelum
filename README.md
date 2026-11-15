@@ -17,6 +17,10 @@
 
 ---
 
+> [!NOTE]
+> **Kaelum 1.x is in maintenance mode.** It receives bug and security fixes only, on the [`v1`](https://github.com/kaelumjs/kaelum/tree/v1) branch.
+> Kaelum 2.0 is under active development on `main` and will include breaking changes.
+
 ## Why Kaelum?
 
 <table>
