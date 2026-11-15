@@ -55,6 +55,7 @@ export default [
       "**/node_modules/",
       "**/coverage/",
       "**/cli/templates/",
+      "apps/",
       "*.config.js",
       "*.config.mjs",
     ],

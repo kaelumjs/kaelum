@@ -1,0 +1,217 @@
+---
+title: "Kaelum — Fast, Minimalist Node.js Framework"
+description: Build web apps and REST APIs with almost zero boilerplate. A thin ergonomic layer over Express.
+template: splash
+hero:
+  title: |
+    Build faster apps
+    <span class="light-text">with less boilerplate</span>
+  tagline: A minimalist Node.js framework for web apps and REST APIs. Same Express power, zero repetitive setup.
+---
+
+import Section from "~/components/Section.astro";
+import Card from "~/components/user-components/NewCard.astro";
+import Grid from "~/components/user-components/Grid.astro";
+
+<Section title="Everything you need
+<span class='light-text'>out of the box</span>" description="Kaelum wraps Express with sensible defaults so you can focus on logic, not boilerplate.">
+
+<Grid columns={4}>
+  <Card title="Zero-Config Start" icon="rocket" iconColor="#7BE1A4">
+    JSON parsing, static files, EJS views — all pre-configured. Just write routes and go.
+  </Card>
+  <Card title="Tree Routing" icon="seti:folder" iconColor="#FFD97B">
+    Recursive nested routes with addRoute and apiRoute. Define deep API trees in a single object.
+  </Card>
+  <Card title="Security Built-in" icon="approve-check-circle" iconColor="#FF8585">
+    One-toggle CORS, Helmet, and XSS protection. Security shouldn't be an afterthought.
+  </Card>
+  <Card title="CLI Scaffolding" icon="seti:config" iconColor="#979BFF">
+    npx kaelum create with Web and API templates. Full project structure in seconds.
+  </Card>
+</Grid>
+</Section>
+
+import HeroTabs from "~/components/HeroTabs.astro";
+import HeroTabsItem from "~/components/HeroTabsItem.astro";
+
+<Section
+  title="Get started <span class='light-text'>in 3 simple steps</span>"
+  description="From zero to running server in under a minute."
+>
+  <HeroTabs>
+    <HeroTabsItem
+      title="Install Kaelum"
+      subtitle="Scaffold a project with the interactive CLI."
+      number={1}
+      code={`$ npx kaelum create
+
+? Project name: my-app
+? Select template: web
+
+✅ Project "my-app" created!
+
+$ cd my-app
+$ npm install`}
+    />
+    <HeroTabsItem
+      title="Configure your app"
+      subtitle="Set up CORS, security, logging — one config object."
+      number={2}
+      code={`const app = require("kaelum")();
+
+app.setConfig({
+  cors: true,
+  helmet: true,
+  logs: "dev",
+  static: "public",
+  port: 3000,
+  views: { engine: "ejs", path: "./views" }
+});`}
+    />
+    <HeroTabsItem
+      title="Start building"
+      subtitle="Add routes, API resources, and launch your server."
+      number={3}
+      code={`app.apiRoute("users", {
+  get: (req, res) => res.json([]),
+  post: (req, res) => res.status(201).json(req.body),
+  "/:id": {
+    get: (req, res) => res.json({ id: req.params.id }),
+    put: (req, res) => res.json({ updated: true }),
+    delete: (req, res) => res.status(204).send()
+  }
+});
+
+app.healthCheck();
+app.useErrorHandler();
+app.start();`}
+    />
+  </HeroTabs>
+</Section>
+
+import ListCard from "~/components/user-components/ListCard.astro";
+import LinkButton from "~/components/LinkButton.astro";
+
+<Section title="Explore the <span class='light-text'>documentation</span>" description="Dive into guides, API reference, and examples.">
+
+<Grid columns={3}>
+<ListCard title="Core Functions" number="7">
+- [addRoute()](/api-reference/add-route/)
+- [apiRoute()](/api-reference/api-route/)
+- [setConfig()](/api-reference/set-config/)
+- [start()](/api-reference/start/)
+- [healthCheck()](/api-reference/health-check/)
+- [setMiddleware()](/guide/core-functions/middleware/)
+
+<LinkButton href="/api-reference/start/" variant="text" className="mt-6 mb-8 ml-4">View API reference</LinkButton>
+</ListCard>
+
+<ListCard title="Guides" number="6">
+- [Getting Started](/getting-started/introduction/overview/)
+- [Environment Variables](/getting-started/configuration/env-variables/)
+- [CLI Reference](/getting-started/configuration/cli/)
+- [Middleware](/guide/core-functions/middleware/)
+- [Error Handling](/guide/core-functions/error-handling/)
+- [Redirects](/guide/features/redirects/)
+
+<LinkButton href="/getting-started/introduction/overview/" variant="text" className="mt-6 mb-8 ml-4">View all guides</LinkButton>
+</ListCard>
+
+<ListCard title="Examples" number="2">
+- [Web Application](/examples/web-app/)
+- [REST API](/examples/rest-api/)
+
+<LinkButton href="/examples/web-app/" variant="text" className="mt-6 mb-8 ml-4">View examples</LinkButton>
+</ListCard>
+</Grid>
+
+</Section>
+
+import AccordionContainer from "~/components/AccordionContainer.astro";
+import Accordion from "~/components/Accordion.astro";
+
+<Section
+  title="Frequently asked <span class='light-text'>questions</span>"
+  description="Common questions about Kaelum answered."
+>
+
+<AccordionContainer tabList={
+  [
+    {
+      type: 'basic',
+      title: 'Getting Started',
+      subtitle: 'Questions about installation and setup.',
+      icon: "rocket"
+    },
+    {
+      type: 'setting',
+      title: 'Configuration',
+      subtitle: 'How to configure your Kaelum app.',
+      icon: "settings"
+    },
+    {
+      type: 'help',
+      title: 'Help & Support',
+      subtitle: 'Where to get help.',
+      icon: "support"
+    }
+  ]
+}>
+
+<Accordion
+  question="What is Kaelum?"
+  answer="Kaelum is a minimalist Node.js framework built on top of Express.js. It reduces boilerplate setup like body parsing, CORS, Helmet, and route registration so you can focus on business logic."
+  type="basic"
+/>
+<Accordion
+  question="Do I need to know Express?"
+  answer="Not necessarily. Kaelum simplifies common Express patterns. However, since it's built on Express, any Express knowledge directly applies. You can mix Kaelum helpers with raw Express middleware."
+  type="basic"
+/>
+<Accordion
+  question="How do I install Kaelum?"
+  answer="Run 'npx kaelum create my-app' to scaffold a new project, or 'npm install kaelum' to add it to an existing project. Node.js 24.22.1+ is required."
+  type="basic"
+/>
+<Accordion
+  question="Is Kaelum production-ready?"
+  answer="Yes. Kaelum is a thin layer over Express — one of the most battle-tested Node.js frameworks. Once running, it's pure Express with zero runtime overhead."
+  type="basic"
+/>
+
+<Accordion
+  question="How do I enable CORS and security headers?"
+  answer="Just pass them in setConfig: app.setConfig({ cors: true, helmet: true }). Kaelum toggles these features with simple boolean flags."
+  type="setting"
+/>
+<Accordion
+  question="Can I use my own Express middleware?"
+  answer="Absolutely. The Kaelum app instance is a standard Express app. Use app.use(), app.get(), or any Express-compatible middleware alongside Kaelum helpers."
+  type="setting"
+/>
+<Accordion
+  question="How does routing work?"
+  answer="Use addRoute() for page routes and apiRoute() for REST resources. Both support nested paths, middleware chains, and all HTTP methods in a single declaration."
+  type="setting"
+/>
+
+<Accordion
+  question="Where can I get help?"
+  answer="Open an issue on our GitHub repository at github.com/kaelumjs/kaelum. Check the docs for troubleshooting tips."
+  type="help"
+/>
+<Accordion
+  question="How do I report a bug?"
+  answer="Please open an issue on our GitHub repository with a minimal reproduction, your Node.js version, and the Kaelum version you're using."
+  type="help"
+/>
+<Accordion
+  question="Can I contribute?"
+  answer="Yes! We welcome contributions. Check CONTRIBUTING.md in the repository for guidelines on how to submit pull requests and report issues."
+  type="help"
+/>
+
+</AccordionContainer>
+
+</Section>

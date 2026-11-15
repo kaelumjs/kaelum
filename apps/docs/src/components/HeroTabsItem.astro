@@ -1,0 +1,82 @@
+---
+import ImageMod from "./ImageMod.astro";
+
+interface Props {
+  title: string;
+  subtitle: string;
+  number: number;
+  image?: string;
+  imageAlt?: string;
+  code?: string;
+  codeLang?: string;
+  isActive?: boolean;
+}
+
+const {
+  title,
+  subtitle,
+  number,
+  image,
+  imageAlt,
+  code,
+  codeLang = "js",
+  isActive = false,
+} = Astro.props;
+---
+
+<div class="hero-tab-item">
+  <div class="hero-tab-nav" data-active={isActive}>
+    <button class="tab-button" data-tab={number}>
+      <span class="tab-number">{number}</span>
+      <div class="tab-content">
+        <h3 class="tab-title">{title}</h3>
+        <p class="tab-subtitle">{subtitle}</p>
+      </div>
+    </button>
+  </div>
+
+  <div class="hero-tab-content" data-panel={number} data-active={isActive}>
+    {image ? (
+      <ImageMod
+        src={image}
+        alt={imageAlt || title}
+        class="tab-image w-full"
+        height={1400}
+        width={2000}
+      />
+    ) : code ? (
+      <div class="tab-code-container">
+        <pre class="tab-code"><code set:html={code} /></pre>
+      </div>
+    ) : (
+      <slot />
+    )}
+  </div>
+</div>
+
+<style>
+  .tab-code-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .tab-code {
+    background: var(--sl-color-gray-6);
+    border: 1px solid color-mix(in srgb, var(--sl-color-white) 8%, transparent);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    font-family: "JetBrains Mono", "Fira Code", "SF Mono", Menlo, monospace;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--sl-color-white);
+    margin: 0;
+  }
+  .tab-code code {
+    background: none;
+    padding: 0;
+    font-size: inherit;
+    color: inherit;
+  }
+</style>

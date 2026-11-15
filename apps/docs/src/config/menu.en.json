@@ -1,0 +1,81 @@
+{
+  "main": [
+    {
+      "name": "Home",
+      "url": "/"
+    },
+    {
+      "name": "Documentation",
+      "url": "/getting-started/introduction/overview/"
+    },
+    {
+      "name": "API Reference",
+      "url": "/api-reference/start/"
+    }
+  ],
+  "footer": {
+    "community": {
+      "title": "Community",
+      "links": [
+        {
+          "name": "GitHub Repo",
+          "url": "https://github.com/kaelumjs/kaelum"
+        },
+        {
+          "name": "npm Package",
+          "url": "https://www.npmjs.com/package/kaelum"
+        },
+        {
+          "name": "Contributing Guide",
+          "url": "https://github.com/kaelumjs/kaelum/blob/main/CONTRIBUTING.md"
+        },
+        {
+          "name": "Report Issues",
+          "url": "https://github.com/kaelumjs/kaelum/issues"
+        }
+      ]
+    },
+    "help_links": {
+      "title": "Docs",
+      "links": [
+        {
+          "name": "Getting Started",
+          "url": "/getting-started/introduction/overview/"
+        },
+        {
+          "name": "Features Guide",
+          "url": "/guide/features/redirects/"
+        },
+        {
+          "name": "API Reference",
+          "url": "/api-reference/start/"
+        },
+        {
+          "name": "Examples",
+          "url": "/examples/web-app/"
+        }
+      ]
+    },
+    "company": {
+      "title": "Resources",
+      "links": [
+        {
+          "name": "Philosophy",
+          "url": "/getting-started/introduction/philosophy/"
+        },
+        {
+          "name": "Changelog",
+          "url": "https://github.com/kaelumjs/kaelum/releases"
+        },
+        {
+          "name": "Security Policy",
+          "url": "https://github.com/kaelumjs/kaelum/blob/main/SECURITY.md"
+        },
+        {
+          "name": "License (MIT)",
+          "url": "https://github.com/kaelumjs/kaelum/blob/main/LICENSE"
+        }
+      ]
+    }
+  }
+}
