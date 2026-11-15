@@ -2,73 +2,58 @@ name: Release
 
 on:
   push:
-    tags:
-      - "v*"
+    branches: ["main"]
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
-  release:
+  release-please:
     runs-on: ubuntu-latest
+    outputs:
+      kaelum_released: ${{ steps.release.outputs['packages/kaelum--release_created'] }}
+      create_kaelum_released: ${{ steps.release.outputs['packages/create-kaelum--release_created'] }}
+    steps:
+      # Keeps a "release PR" open with the next version and changelog.
+      # Merging that PR creates the tags and GitHub releases.
+      - uses: googleapis/release-please-action@v5
+        id: release
+
+  publish:
+    needs: release-please
+    if: >-
+      needs.release-please.outputs.kaelum_released == 'true' ||
+      needs.release-please.outputs.create_kaelum_released == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # npm trusted publishing (OIDC) and provenance
     steps:
       - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
+          node-version: "24.22.1"
+          cache: "pnpm"
+          registry-url: "https://registry.npmjs.org"
 
-      - name: Generate changelog
-        id: changelog
-        run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          PREV_TAG=$(git tag --sort=-version:refname | grep -v "^${TAG}$" | head -1)
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm test:dist
+      - run: pnpm publint
 
-          if [ -n "$PREV_TAG" ]; then
-            COMMITS=$(git log ${PREV_TAG}..${TAG} --pretty=format:"%s|%h" --no-merges)
-          else
-            COMMITS=$(git log ${TAG} --pretty=format:"%s|%h" --no-merges)
-          fi
+      - name: Publish kaelum
+        if: needs.release-please.outputs.kaelum_released == 'true'
+        working-directory: packages/kaelum
+        run: node ../../scripts/publish.mjs
 
-          FEATURES=""
-          FIXES=""
-          PERF=""
-          REFACTOR=""
-          DOCS=""
-          MISC=""
-
-          while IFS= read -r line; do
-            [ -z "$line" ] && continue
-            MSG=$(echo "$line" | cut -d'|' -f1)
-            SHA=$(echo "$line" | cut -d'|' -f2)
-
-            case "$MSG" in
-              feat*)    FEATURES="${FEATURES}\n- ${MSG} (${SHA})" ;;
-              fix*)     FIXES="${FIXES}\n- ${MSG} (${SHA})" ;;
-              perf*)    PERF="${PERF}\n- ${MSG} (${SHA})" ;;
-              refactor*) REFACTOR="${REFACTOR}\n- ${MSG} (${SHA})" ;;
-              docs*)    DOCS="${DOCS}\n- ${MSG} (${SHA})" ;;
-              *)        MISC="${MISC}\n- ${MSG} (${SHA})" ;;
-            esac
-          done <<< "$COMMITS"
-
-          NOTES=""
-          [ -n "$FEATURES" ] && NOTES="${NOTES}## Features\n${FEATURES}\n\n"
-          [ -n "$FIXES" ] && NOTES="${NOTES}## Bug Fixes\n${FIXES}\n\n"
-          [ -n "$PERF" ] && NOTES="${NOTES}## Performance\n${PERF}\n\n"
-          [ -n "$REFACTOR" ] && NOTES="${NOTES}## Refactoring\n${REFACTOR}\n\n"
-          [ -n "$DOCS" ] && NOTES="${NOTES}## Documentation\n${DOCS}\n\n"
-          [ -n "$MISC" ] && NOTES="${NOTES}## Other Changes\n${MISC}\n\n"
-
-          if [ -n "$PREV_TAG" ]; then
-            NOTES="${NOTES}**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${TAG}"
-          fi
-
-          echo "notes<<EOF" >> $GITHUB_OUTPUT
-          echo -e "$NOTES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
-          body: ${{ steps.changelog.outputs.notes }}
+      - name: Publish create-kaelum
+        if: needs.release-please.outputs.create_kaelum_released == 'true'
+        working-directory: packages/create-kaelum
+        run: node ../../scripts/publish.mjs

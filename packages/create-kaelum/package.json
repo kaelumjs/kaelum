@@ -1,7 +1,8 @@
 {
   "name": "create-kaelum",
-  "version": "0.0.0",
+  "version": "1.10.4",
   "description": "Scaffold a new Kaelum project.",
+  "type": "commonjs",
   "bin": {
     "create-kaelum": "src/index.js"
   },

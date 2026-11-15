@@ -6,6 +6,7 @@ const os = require("node:os");
 const path = require("node:path");
 
 const cli = path.resolve(__dirname, "..", "src", "index.js");
+const { version } = require("../package.json");
 
 function run(args, cwd) {
   return execFileSync(process.execPath, [cli, ...args], { cwd, encoding: "utf8" });
@@ -36,7 +37,7 @@ for (const [template, files] of Object.entries(templates)) {
 
     const pkg = JSON.parse(fs.readFileSync(path.join(project, "package.json"), "utf8"));
     assert.equal(pkg.name, "my-app");
-    assert.ok(pkg.dependencies.kaelum, "kaelum should be a dependency");
+    assert.equal(pkg.dependencies.kaelum, `^${version}`, "depends on the matching kaelum release");
     assert.ok(!fs.existsSync(path.join(project, "node_modules")), "nothing is installed");
   });
 }
@@ -61,6 +62,5 @@ test("refuses to overwrite an existing folder", (t) => {
 });
 
 test("prints the version", () => {
-  const { version } = require("../package.json");
   assert.equal(run(["--version"], process.cwd()).trim(), `create-kaelum v${version}`);
 });

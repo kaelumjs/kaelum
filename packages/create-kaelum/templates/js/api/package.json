@@ -16,7 +16,7 @@
     "node": ">=24.22.1"
   },
   "dependencies": {
-    "kaelum": "^1.10.4"
+    "kaelum": "*"
   },
   "devDependencies": {}
 }
