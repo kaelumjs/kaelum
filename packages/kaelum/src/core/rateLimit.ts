@@ -3,6 +3,7 @@
 // Zero-dependency, in-memory sliding-window rate limiter.
 
 import type { NextFunction, Request, Response } from "express";
+import { errorBody } from "../http-error.js";
 import type { RateLimitConfig } from "../types.js";
 
 /**
@@ -100,7 +101,7 @@ function createRateLimiter(options: RateLimitConfig = {}) {
   const {
     windowMs = 15 * 60 * 1000,
     max = 100,
-    message = { error: "Too many requests, please try again later." },
+    message = errorBody(429, "Too many requests, please try again later."),
     statusCode = 429,
     keyGenerator = (req: Request) => req.ip || req.connection.remoteAddress || "unknown",
     skip = () => false,
@@ -143,8 +144,7 @@ function createRateLimiter(options: RateLimitConfig = {}) {
         res.setHeader("Retry-After", String(Math.max(retryAfter, 0)));
       }
 
-      const body =
-        typeof message === "string" ? { error: message } : message;
+      const body = typeof message === "string" ? errorBody(statusCode, message) : message;
       return res.status(statusCode).json(body);
     }
 

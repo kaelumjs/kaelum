@@ -94,7 +94,7 @@ describe("createRateLimiter middleware", () => {
     expect(nextCalled).toBe(false);
     expect(res._status).toBe(429);
     expect(res._json).toEqual({
-      error: "Too many requests, please try again later.",
+      error: { code: "TOO_MANY_REQUESTS", message: "Too many requests, please try again later." },
     });
     mw._store.shutdown();
   });
@@ -113,7 +113,7 @@ describe("createRateLimiter middleware", () => {
     mw(req, res, () => {});
 
     expect(res._status).toBe(503);
-    expect(res._json).toEqual({ error: "Calm down!" });
+    expect(res._json).toEqual({ error: { code: "SERVICE_UNAVAILABLE", message: "Calm down!" } });
     mw._store.shutdown();
   });
 

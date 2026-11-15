@@ -14,6 +14,7 @@
 
 import crypto from "crypto";
 import type { NextFunction, Request, Response } from "express";
+import { errorBody } from "../http-error.js";
 import type { CsrfOptions } from "../types.js";
 
 type CsrfRequest = Request & { _csrfToken?: string };
@@ -170,12 +171,12 @@ function originCheck(options: CsrfOptions = {}) {
     const allowedNorm = allowed.map((o) => o.trim().replace(/\/$/, ""));
 
     if (!requestOrigin) {
-      return res.status(403).json({ error: "CSRF validation failed" });
+      return res.status(403).json(errorBody(403, "CSRF validation failed", "CSRF_FAILED"));
     }
 
     const reqOriginNorm = requestOrigin.replace(/\/$/, "");
     if (!allowedNorm.includes(reqOriginNorm)) {
-      return res.status(403).json({ error: "CSRF validation failed" });
+      return res.status(403).json(errorBody(403, "CSRF validation failed", "CSRF_FAILED"));
     }
 
     next();
@@ -238,7 +239,7 @@ function doubleSubmit(options: CsrfOptions = {}) {
     const headerToken = req.headers[headerLower];
 
     if (!cookieToken || !headerToken) {
-      return res.status(403).json({ error: "CSRF validation failed" });
+      return res.status(403).json(errorBody(403, "CSRF validation failed", "CSRF_FAILED"));
     }
 
     // Constant-time comparison to prevent timing attacks
@@ -248,7 +249,7 @@ function doubleSubmit(options: CsrfOptions = {}) {
       cookieBuf.length !== headerBuf.length ||
       !crypto.timingSafeEqual(cookieBuf, headerBuf)
     ) {
-      return res.status(403).json({ error: "CSRF validation failed" });
+      return res.status(403).json(errorBody(403, "CSRF validation failed", "CSRF_FAILED"));
     }
 
     next();

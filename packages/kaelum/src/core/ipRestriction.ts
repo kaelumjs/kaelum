@@ -5,6 +5,7 @@
 
 import net from "net";
 import type { Express, NextFunction, Request, Response } from "express";
+import { errorBody } from "../http-error.js";
 import type { IpRestrictionOptions } from "../types.js";
 
 
@@ -80,11 +81,19 @@ function matchesAny(clientIp: string, rules: string[]) {
  * @param {Function} [options.onDenied] - Custom handler (req: Request, res: Response) called when access is denied
  */
 function setupIpRestriction(app: Express, options: IpRestrictionOptions = {}) {
+  app.use(ipRestriction(options));
+}
+
+/**
+ * The IP restriction middleware on its own, for `app.use()` or a route's `use`.
+ * Same rules as above: `allow` always wins, then `deny`, otherwise the request passes.
+ */
+function ipRestriction(options: IpRestrictionOptions = {}) {
   const allowRules = Array.isArray(options.allow) ? options.allow : [];
   const denyRules = Array.isArray(options.deny) ? options.deny : [];
   const onDenied = typeof options.onDenied === "function" ? options.onDenied : null;
 
-  app.use(function kaelumIpRestriction(req: Request, res: Response, next: NextFunction) {
+  return function kaelumIpRestriction(req: Request, res: Response, next: NextFunction) {
     const clientIp = req.ip || (req.connection && req.connection.remoteAddress) || "";
 
     // Allow list takes highest priority
@@ -97,14 +106,13 @@ function setupIpRestriction(app: Express, options: IpRestrictionOptions = {}) {
       if (onDenied) {
         return onDenied(req, res);
       }
-      return res.status(403).json({
-        error: "Forbidden",
-        message: "Your IP address is not allowed to access this resource.",
-      });
+      return res
+        .status(403)
+        .json(errorBody(403, "Your IP address is not allowed to access this resource.", "IP_NOT_ALLOWED"));
     }
 
     next();
-  });
+  };
 }
 
-export { setupIpRestriction, matchesCIDR };
+export { setupIpRestriction, ipRestriction, matchesCIDR };

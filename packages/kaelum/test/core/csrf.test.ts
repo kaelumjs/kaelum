@@ -48,7 +48,7 @@ describe("core/csrf — originCheck", () => {
       const app = makeOriginApp({ origin: "https://myapp.com" });
       const res = await request(app).post("/test").send({});
       expect(res.status).toBe(403);
-      expect(res.body.error).toBe("CSRF validation failed");
+      expect(res.body.error).toEqual({ code: "CSRF_FAILED", message: "CSRF validation failed" });
     });
 
     it("PUT without Origin → 403", async () => {
@@ -180,7 +180,7 @@ describe("core/csrf — doubleSubmit", () => {
       const app = makeDoubleApp();
       const res = await request(app).post("/test").send({});
       expect(res.status).toBe(403);
-      expect(res.body.error).toBe("CSRF validation failed");
+      expect(res.body.error).toEqual({ code: "CSRF_FAILED", message: "CSRF validation failed" });
     });
 
     it("POST with cookie but no header → 403", async () => {

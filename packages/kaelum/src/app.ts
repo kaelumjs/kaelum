@@ -3,7 +3,11 @@ import cors from "cors";
 import express, { type Express, type NextFunction, type Request, type Response, type Router } from "express";
 import helmet from "helmet";
 import { resolveOptions, type KaelumOptions, type ResolvedOptions } from "./config.js";
+import { doubleSubmit, originCheck } from "./core/csrf.js";
+import { ipRestriction } from "./core/ipRestriction.js";
+import { createRateLimiter } from "./core/rateLimit.js";
 import { createRequestLogger } from "./core/requestLogger.js";
+import { serverTiming } from "./core/timing.js";
 import { HttpError, errorBody } from "./http-error.js";
 import { requestId } from "./middleware/request-id.js";
 import { RouteTable } from "./routing/table.js";
@@ -158,8 +162,17 @@ function builtInMiddleware(config: ResolvedOptions): Middleware[] {
   // First, so the ID is available to the logger and to every later error.
   if (config.requestId) stack.push(requestId(config.requestId));
   if (config.logs) stack.push(createRequestLogger(config.logs));
+  if (config.timing) stack.push(serverTiming(config.timing));
   if (config.helmet) stack.push(helmet(config.helmet));
   if (config.cors) stack.push(cors(config.cors));
+
+  // Cheap rejections come before the body is read.
+  if (config.ipRestriction) stack.push(ipRestriction(config.ipRestriction));
+  if (config.rateLimit) stack.push(createRateLimiter(config.rateLimit));
+  if (config.csrf) {
+    const { strategy = "origin", ...csrfOptions } = config.csrf;
+    stack.push(strategy === "token" ? doubleSubmit(csrfOptions) : originCheck(csrfOptions));
+  }
 
   if (config.body) {
     const { limit, json, urlencoded } = config.body;
