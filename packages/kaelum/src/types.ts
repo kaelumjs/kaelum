@@ -76,7 +76,8 @@ export interface KaelumConfig {
   cors?: boolean | object;
   helmet?: boolean | object;
   static?: string | false;
-  logs?: string | boolean;
+  /** Request logging: `true` or `"dev"` (colored status), `"tiny"` (no colors), `false` to disable. */
+  logs?: boolean | "dev" | "tiny";
   bodyParser?: boolean;
   port?: number;
   views?: { engine?: string; path?: string };

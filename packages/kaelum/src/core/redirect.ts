@@ -53,7 +53,7 @@ function ensureLocals(app: Express) {
  * @param {string} path
  */
 function removeKaelumRedirectsForPath(app: Express, path: string) {
-  if (!app || !app._router || !Array.isArray(app._router.stack)) return;
+  if (!app || !app.router || !Array.isArray(app.router.stack)) return;
   if (!app.locals || !Array.isArray(app.locals._kaelum_redirects)) return;
 
   // find tracked entries for this path
@@ -61,7 +61,7 @@ function removeKaelumRedirectsForPath(app: Express, path: string) {
   if (tracked.length === 0) return;
 
   // remove router layers whose handler matches tracked.handler
-  app._router.stack = app._router.stack.filter((layer: any) => {
+  app.router.stack = app.router.stack.filter((layer: any) => {
     // keep everything that is not a route
     if (!layer || !layer.route) return true;
     if (layer.route.path !== path) return true;

@@ -16,6 +16,7 @@ import { setupPrettyJson } from "./prettyJson.js";
 import { setupTrimTrailingSlash } from "./trailingSlash.js";
 import { setupIpRestriction } from "./ipRestriction.js";
 import { enableGracefulShutdown, removeSignalHandlers } from "./shutdown.js";
+import { createRequestLogger } from "./requestLogger.js";
 
 // Optional dependencies are loaded on demand, so a missing one is not fatal.
 const require = createRequire(import.meta.url);
@@ -67,7 +68,7 @@ function removeKaelumBodyParsers(app) {
 }
 
 /**
- * Remove morgan logger if previously set
+ * Remove the request logger if previously set
  * @param {Object} app
  */
 function removeKaelumLogger(app) {
@@ -287,23 +288,24 @@ function setConfig(app, options = {}) {
     }
   }
 
-  // --- Logs (morgan) ---
+  // --- Logs ---
   if (Object.hasOwn(options, "logs")) {
     // remove previous logger first
     removeKaelumLogger(app);
 
     if (options.logs) {
-      const morgan = tryRequire("morgan");
-      if (!morgan) {
-        console.warn("Kaelum: morgan package not installed. Skipping logs.");
-      } else {
-        // use provided format string, default to 'dev' when logs: true
-        const format = typeof options.logs === "string" ? options.logs : "dev";
-        const logger = morgan(format);
-        app.locals._kaelum_logger = logger;
-        app.use(logger);
-        console.log(`📊 Request logging enabled (morgan: ${format}).`);
+      // "dev" (default, colored status) or "tiny" (no colors)
+      let format = options.logs === true ? "dev" : options.logs;
+      if (format !== "dev" && format !== "tiny") {
+        console.warn(
+          `Kaelum: unknown logs format "${format}". Supported: "dev", "tiny". Using "tiny".`
+        );
+        format = "tiny";
       }
+      const logger = createRequestLogger(format);
+      app.locals._kaelum_logger = logger;
+      app.use(logger);
+      console.log(`📊 Request logging enabled (${format}).`);
     } else {
       console.log("📊 Request logging disabled.");
     }

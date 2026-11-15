@@ -48,8 +48,8 @@ const DEFAULT_PATH = "/health";
  */
 function routeExists(app: Express, path: string, method: string) {
   try {
-    if (!app || !app._router || !Array.isArray(app._router.stack)) return false;
-    return app._router.stack.some((layer: any) => {
+    if (!app || !app.router || !Array.isArray(app.router.stack)) return false;
+    return app.router.stack.some((layer: any) => {
       if (!layer || !layer.route) return false;
       if (layer.route.path !== path) return false;
       return (
@@ -131,8 +131,8 @@ function registerHealth(app: Express, opts: string | HealthOptions = {}, extraOp
   if (options.replace) {
     try {
       // remove layers that match exactly the route path and method
-      if (app._router && Array.isArray(app._router.stack)) {
-        app._router.stack = app._router.stack.filter((layer: any) => {
+      if (app.router && Array.isArray(app.router.stack)) {
+        app.router.stack = app.router.stack.filter((layer: any) => {
           if (!layer || !layer.route) return true; // keep non-route layers
           if (layer.route.path !== p) return true; // keep other routes
           // keep only layers that do not match the method we want to replace

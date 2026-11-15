@@ -62,8 +62,8 @@ function methodNotAllowed(app, options = {}) {
       }
     }
 
-    if (app._router && app._router.stack) {
-      traverse(app._router.stack, req.path);
+    if (app.router && app.router.stack) {
+      traverse(app.router.stack, req.path);
     }
 
     if (methods.size > 0) {
