@@ -11,6 +11,7 @@
     "test/types",
     "test/app.test.ts",
     "test/schema.test.ts",
-    "test/k.test.ts"
+    "test/k.test.ts",
+    "test/config.test.ts"
   ]
 }
