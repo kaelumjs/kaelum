@@ -24,7 +24,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -67,6 +67,7 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^24.0.0",
+    "@types/supertest": "^7.2.1",
     "@vitest/coverage-v8": "^5.1.0",
     "supertest": "7.2.2",
     "typescript": "^5.9.3",
