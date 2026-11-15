@@ -1,0 +1,506 @@
+// @ts-nocheck -- 1.x API surface, replaced in Phase 2 (ADR-004); not worth typing twice.
+// core/setConfig.js
+// Kaelum centralized configuration helper.
+// - Supports toggling CORS, Helmet, static folder, Morgan logs, bodyParser, and port.
+// - Persists merged config to app locals (app.set("kaelum:config", ...)).
+// - Keeps references to Kaelum-installed middleware so toggles (false) remove them.
+
+import path from "node:path";
+import { createRequire } from "node:module";
+import express from "express";
+import { removeMiddlewareByFn } from "./utils.js";
+import { createRateLimiter } from "./rateLimit.js";
+import { originCheck } from "./csrf.js";
+import { setupEtag } from "./etag.js";
+import { setupPrettyJson } from "./prettyJson.js";
+import { setupTrimTrailingSlash } from "./trailingSlash.js";
+import { setupIpRestriction } from "./ipRestriction.js";
+import { enableGracefulShutdown, removeSignalHandlers } from "./shutdown.js";
+
+// Optional dependencies are loaded on demand, so a missing one is not fatal.
+const require = createRequire(import.meta.url);
+
+function tryRequire(name) {
+  try {
+    return require(name);
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Merge new options into existing stored config
+ * @param {Object} app
+ * @param {Object} options
+ */
+function persistConfig(app, options = {}) {
+  const prev = app.locals.kaelumConfig || {};
+  const merged = Object.assign({}, prev, options);
+  app.locals.kaelumConfig = merged;
+  app.set("kaelum:config", merged);
+  return merged;
+}
+
+
+/**
+ * Remove static middleware previously installed by Kaelum (if any)
+ * @param {Object} app
+ */
+function removeKaelumStatic(app) {
+  const prev = app.locals && app.locals._kaelum_static;
+  if (prev) {
+    removeMiddlewareByFn(app, prev);
+    app.locals._kaelum_static = null;
+  }
+}
+
+/**
+ * Remove body parsers previously installed by Kaelum
+ * @param {Object} app
+ */
+function removeKaelumBodyParsers(app) {
+  const arr = app.locals && app.locals._kaelum_bodyparsers;
+  if (Array.isArray(arr)) {
+    arr.forEach((fn) => removeMiddlewareByFn(app, fn));
+    app.locals._kaelum_bodyparsers = [];
+  }
+}
+
+/**
+ * Remove morgan logger if previously set
+ * @param {Object} app
+ */
+function removeKaelumLogger(app) {
+  const prev = app.locals && app.locals._kaelum_logger;
+  if (prev) {
+    removeMiddlewareByFn(app, prev);
+    app.locals._kaelum_logger = null;
+  }
+}
+
+/**
+ * Remove Kaelum-installed CORS middleware (if any)
+ * @param {Object} app
+ */
+function removeKaelumCors(app) {
+  const prev = app.locals && app.locals._kaelum_cors;
+  if (prev) {
+    removeMiddlewareByFn(app, prev);
+    app.locals._kaelum_cors = null;
+  }
+}
+
+/**
+ * Remove Kaelum-installed Helmet middleware (if any)
+ * @param {Object} app
+ */
+function removeKaelumHelmet(app) {
+  const prev = app.locals && app.locals._kaelum_helmet;
+  if (prev) {
+    removeMiddlewareByFn(app, prev);
+    app.locals._kaelum_helmet = null;
+  }
+}
+
+/**
+ * Remove Kaelum-installed rate-limiting middleware (if any)
+ * Also shuts down the MemoryStore cleanup interval.
+ * @param {Object} app
+ */
+function removeKaelumRateLimit(app) {
+  const prev = app.locals && app.locals._kaelum_ratelimit;
+  if (prev) {
+    // shut down the store's cleanup interval if present
+    if (prev._store && typeof prev._store.shutdown === "function") {
+      prev._store.shutdown();
+    }
+    removeMiddlewareByFn(app, prev);
+    app.locals._kaelum_ratelimit = null;
+  }
+}
+
+/**
+ * Remove Kaelum-installed CSRF middleware (if any)
+ * @param {Object} app
+ */
+function removeKaelumCsrf(app) {
+  const prev = app.locals && app.locals._kaelum_csrf;
+  if (prev) {
+    removeMiddlewareByFn(app, prev);
+    app.locals._kaelum_csrf = null;
+  }
+}
+
+/**
+ * Remove Kaelum-installed ETag exclude middleware (if any) and reset etag setting
+ * @param {Object} app
+ */
+function removeKaelumEtag(app) {
+  const prev = app.locals && app.locals._kaelum_etag_exclude;
+  if (prev) {
+    removeMiddlewareByFn(app, prev);
+    app.locals._kaelum_etag_exclude = null;
+  }
+}
+
+/**
+ * Remove Kaelum-installed Pretty JSON middleware (if any)
+ * @param {Object} app
+ */
+function removeKaelumPrettyJson(app) {
+  const prev = app.locals && app.locals._kaelum_prettyjson;
+  if (prev) {
+    removeMiddlewareByFn(app, prev);
+    app.locals._kaelum_prettyjson = null;
+  }
+}
+
+/**
+ * Remove Kaelum-installed Trailing Slash middleware (if any)
+ * @param {Object} app
+ */
+function removeKaelumTrailingSlash(app) {
+  const prev = app.locals && app.locals._kaelum_trailingslash;
+  if (prev) {
+    removeMiddlewareByFn(app, prev);
+    app.locals._kaelum_trailingslash = null;
+  }
+}
+
+/**
+ * Remove Kaelum-installed IP Restriction middleware (if any)
+ * @param {Object} app
+ */
+function removeKaelumIpRestriction(app) {
+  const prev = app.locals && app.locals._kaelum_iprestriction;
+  if (prev) {
+    removeMiddlewareByFn(app, prev);
+    app.locals._kaelum_iprestriction = null;
+  }
+}
+
+/**
+ * Apply configuration options to the app
+ * @param {Object} app - express app instance
+ * @param {Object} options - supported keys: cors, helmet, static, logs, port, bodyParser
+ */
+function setConfig(app, options = {}) {
+  if (!app) throw new Error("setConfig requires an app instance");
+
+  // persist/merge config
+  const cfg = persistConfig(app, options);
+
+  // --- CORS ---
+  if (Object.hasOwn(options, "cors")) {
+    if (options.cors) {
+      const cors = tryRequire("cors");
+      const corsOpts = options.cors === true ? {} : options.cors;
+      if (!cors) {
+        console.warn(
+          "Kaelum: cors package not installed. Skipping CORS setup."
+        );
+      } else {
+        // remove previous Kaelum-installed cors if exists
+        removeKaelumCors(app);
+
+        // create middleware function and store reference so it can be removed later
+        const corsFn = cors(corsOpts);
+        app.locals._kaelum_cors = corsFn;
+        app.use(corsFn);
+        console.log("🛡️  CORS activated.");
+      }
+    } else {
+      // disable Kaelum-installed CORS middleware if present
+      removeKaelumCors(app);
+      console.log("🛡️  CORS disabled (Kaelum-managed).");
+    }
+  }
+
+  // --- Helmet ---
+  if (Object.hasOwn(options, "helmet")) {
+    if (options.helmet) {
+      const helmet = tryRequire("helmet");
+      const helmetOpts = options.helmet === true ? {} : options.helmet;
+      if (!helmet) {
+        console.warn(
+          "Kaelum: helmet package not installed. Skipping Helmet setup."
+        );
+      } else {
+        // remove previous Kaelum-installed helmet if exists
+        removeKaelumHelmet(app);
+
+        const helmetFn = helmet(helmetOpts);
+        app.locals._kaelum_helmet = helmetFn;
+        app.use(helmetFn);
+        console.log("🛡️  Helmet activated.");
+      }
+    } else {
+      // disable Kaelum-installed Helmet middleware if present
+      removeKaelumHelmet(app);
+      console.log("🛡️  Helmet disabled (Kaelum-managed).");
+    }
+  }
+
+  // --- Static folder handling ---
+  if (Object.hasOwn(options, "static")) {
+    // remove previous Kaelum static
+    removeKaelumStatic(app);
+
+    if (options.static) {
+      const expressStatic = express.static;
+      // resolve to absolute path relative to project root if necessary
+      const dir =
+        typeof options.static === "string"
+          ? path.resolve(process.cwd(), options.static)
+          : path.join(process.cwd(), "public");
+      const staticFn = expressStatic(dir);
+      app.locals._kaelum_static = staticFn;
+      app.use(staticFn);
+      console.log(`📁 Static files served from ${dir}`);
+    } else {
+      // static === false -> nothing to add (static removed)
+      console.log("📁 Static serving disabled.");
+    }
+  }
+
+  // --- Body parser toggle ---
+  if (Object.hasOwn(options, "bodyParser")) {
+    if (options.bodyParser === false) {
+      // remove Kaelum-installed body parsers
+      removeKaelumBodyParsers(app);
+      console.log("📦 Body parsers disabled.");
+    } else {
+      // ensure body parsers are installed (if not present)
+      if (
+        !app.locals._kaelum_bodyparsers ||
+        app.locals._kaelum_bodyparsers.length === 0
+      ) {
+        const jsonParser = express.json();
+        const urlencodedParser = express.urlencoded({
+          extended: true,
+        });
+        app.locals._kaelum_bodyparsers = [jsonParser, urlencodedParser];
+        app.use(jsonParser);
+        app.use(urlencodedParser);
+        console.log("📦 Body parsers enabled (JSON + URL-encoded).");
+      }
+    }
+  }
+
+  // --- Logs (morgan) ---
+  if (Object.hasOwn(options, "logs")) {
+    // remove previous logger first
+    removeKaelumLogger(app);
+
+    if (options.logs) {
+      const morgan = tryRequire("morgan");
+      if (!morgan) {
+        console.warn("Kaelum: morgan package not installed. Skipping logs.");
+      } else {
+        // use provided format string, default to 'dev' when logs: true
+        const format = typeof options.logs === "string" ? options.logs : "dev";
+        const logger = morgan(format);
+        app.locals._kaelum_logger = logger;
+        app.use(logger);
+        console.log(`📊 Request logging enabled (morgan: ${format}).`);
+      }
+    } else {
+      console.log("📊 Request logging disabled.");
+    }
+  }
+
+  // --- Port persisted in config (start will read it) ---
+  if (Object.hasOwn(options, "port")) {
+    const p = options.port;
+    if (p === false || p === null) {
+      // unset
+      const merged = Object.assign({}, app.locals.kaelumConfig);
+      delete merged.port;
+      app.locals.kaelumConfig = merged;
+      app.set("kaelum:config", merged);
+      console.log("🔌 Port preference cleared from Kaelum config.");
+    } else if (typeof p === "number" || typeof p === "string") {
+      // persist port as number if possible
+      const asNum = Number(p);
+      app.locals.kaelumConfig.port = Number.isNaN(asNum) ? p : asNum;
+      app.set("kaelum:config", app.locals.kaelumConfig);
+      console.log(
+        `🔌 Port set to ${app.locals.kaelumConfig.port} in Kaelum config.`
+      );
+    }
+  }
+
+  // --- View Engine ---
+  if (Object.hasOwn(options, "views")) {
+    const v = options.views;
+    if (v && typeof v === "object") {
+      if (v.engine) {
+        app.set("view engine", v.engine);
+        console.log(`🎨 View engine set to: ${v.engine}`);
+      }
+      if (v.path) {
+        const p = path.resolve(process.cwd(), v.path);
+        app.set("views", p);
+        console.log(`🎨 Views directory set to: ${p}`);
+      }
+    }
+  }
+
+  // --- Rate Limiting ---
+  if (Object.hasOwn(options, "rateLimit")) {
+    if (options.rateLimit) {
+      const rateLimitOpts =
+        options.rateLimit === true ? {} : options.rateLimit;
+
+      // remove previous Kaelum-installed rate limiter if exists
+      removeKaelumRateLimit(app);
+
+      const rateLimitFn = createRateLimiter(rateLimitOpts);
+      app.locals._kaelum_ratelimit = rateLimitFn;
+      app.use(rateLimitFn);
+      console.log("⏱️  Rate limiting activated.");
+    } else {
+      // disable Kaelum-installed rate limiter if present
+      removeKaelumRateLimit(app);
+      console.log("⏱️  Rate limiting disabled (Kaelum-managed).");
+    }
+  }
+
+  // --- CSRF Protection ---
+  if (Object.hasOwn(options, "csrf")) {
+    if (options.csrf) {
+      const csrfOpts = options.csrf === true ? {} : options.csrf;
+
+      // remove previous Kaelum-installed CSRF middleware if exists
+      removeKaelumCsrf(app);
+
+      const csrfFn = originCheck(csrfOpts);
+      app.locals._kaelum_csrf = csrfFn;
+      app.use(csrfFn);
+      console.log("🔒 CSRF protection activated (origin check).");
+    } else {
+      removeKaelumCsrf(app);
+      console.log("🔒 CSRF protection disabled (Kaelum-managed).");
+    }
+  }
+
+  // --- ETag ---
+  if (Object.hasOwn(options, "etag")) {
+    if (options.etag) {
+      const etagOpts = options.etag === true ? {} : options.etag;
+
+      // Remove previous exclude middleware if exists
+      removeKaelumEtag(app);
+
+      setupEtag(app, etagOpts);
+      console.log(`🏷️  ETag support activated (${etagOpts.weak ? "weak" : "strong"}).`);
+    } else {
+      removeKaelumEtag(app);
+      app.set("etag", false);
+      console.log("🏷️  ETag support disabled.");
+    }
+  }
+
+  // --- Pretty JSON ---
+  if (Object.hasOwn(options, "prettyJson")) {
+    if (options.prettyJson) {
+      const mode = options.prettyJson === true ? true : options.prettyJson;
+
+      removeKaelumPrettyJson(app);
+
+      // Wrap app.use to capture the middleware reference for future removal
+      const originalUse = app.use.bind(app);
+      let captured = null;
+      app.use = function (...args) {
+        if (args.length === 1 && typeof args[0] === "function") {
+          captured = args[0];
+        }
+        return originalUse(...args);
+      };
+      setupPrettyJson(app, mode);
+      app.use = originalUse;
+      if (captured) app.locals._kaelum_prettyjson = captured;
+
+      const modeLabel = mode === "query" ? "query-triggered" : "always";
+      console.log(`✨ Pretty JSON activated (${modeLabel}).`);
+    } else {
+      removeKaelumPrettyJson(app);
+      console.log("✨ Pretty JSON disabled (Kaelum-managed).");
+    }
+  }
+
+  // --- Trim Trailing Slash ---
+  if (Object.hasOwn(options, "trimTrailingSlash")) {
+    if (options.trimTrailingSlash) {
+      const opts =
+        options.trimTrailingSlash === true ? {} : options.trimTrailingSlash;
+
+      removeKaelumTrailingSlash(app);
+
+      const originalUse = app.use.bind(app);
+      let captured = null;
+      app.use = function (...args) {
+        if (args.length === 1 && typeof args[0] === "function") {
+          captured = args[0];
+        }
+        return originalUse(...args);
+      };
+      setupTrimTrailingSlash(app, opts);
+      app.use = originalUse;
+      if (captured) app.locals._kaelum_trailingslash = captured;
+
+      console.log(`🔗 Trailing slash redirect activated (${opts.status || 301}).`);
+    } else {
+      removeKaelumTrailingSlash(app);
+      console.log("🔗 Trailing slash redirect disabled (Kaelum-managed).");
+    }
+  }
+
+  // --- IP Restriction ---
+  if (Object.hasOwn(options, "ipRestriction")) {
+    if (options.ipRestriction) {
+      const opts =
+        options.ipRestriction === true ? {} : options.ipRestriction;
+
+      removeKaelumIpRestriction(app);
+
+      const originalUse = app.use.bind(app);
+      let captured = null;
+      app.use = function (...args) {
+        if (args.length === 1 && typeof args[0] === "function") {
+          captured = args[0];
+        }
+        return originalUse(...args);
+      };
+      setupIpRestriction(app, opts);
+      app.use = originalUse;
+      if (captured) app.locals._kaelum_iprestriction = captured;
+
+      console.log("🔐 IP restriction activated.");
+    } else {
+      removeKaelumIpRestriction(app);
+      console.log("🔐 IP restriction disabled (Kaelum-managed).");
+    }
+  }
+
+  // --- Graceful Shutdown ---
+  if (Object.hasOwn(options, "gracefulShutdown")) {
+    const server = app.locals && app.locals._kaelum_server;
+    if (server && server.listening) {
+      if (options.gracefulShutdown === false) {
+        removeSignalHandlers(app);
+      } else {
+        const shutdownOpts =
+          typeof options.gracefulShutdown === "object"
+            ? options.gracefulShutdown
+            : {};
+        enableGracefulShutdown(app, shutdownOpts);
+      }
+    }
+  }
+
+  // Return the full merged config for convenience
+  return app.locals.kaelumConfig;
+}
+
+export default setConfig;
