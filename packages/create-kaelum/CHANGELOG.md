@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.0-alpha.1](https://github.com/kaelumjs/kaelum/compare/create-kaelum-v2.0.0-alpha.0...create-kaelum-v2.0.0-alpha.1) (2026-11-15)
+
+
+### Miscellaneous Chores
+
+* **create-kaelum:** Synchronize kaelum versions
+
 ## [2.0.0-alpha.0](https://github.com/kaelumjs/kaelum/compare/create-kaelum-v1.10.4...create-kaelum-v2.0.0-alpha.0) (2026-11-15)
 
 
