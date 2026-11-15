@@ -8,19 +8,20 @@
   "include-component-in-tag": true,
   "packages": {
     "packages/kaelum": {
-      "component": "kaelum",
-      "release-as": "2.0.0-alpha.0"
+      "component": "kaelum"
     },
     "packages/create-kaelum": {
-      "component": "create-kaelum",
-      "release-as": "2.0.0-alpha.0"
+      "component": "create-kaelum"
     }
   },
   "plugins": [
     {
       "type": "linked-versions",
       "groupName": "kaelum",
-      "components": ["kaelum", "create-kaelum"]
+      "components": [
+        "kaelum",
+        "create-kaelum"
+      ]
     }
   ]
 }
