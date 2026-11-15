@@ -1,6 +1,11 @@
 import type { Server } from "node:http";
+import cors from "cors";
 import express, { type Express, type NextFunction, type Request, type Response, type Router } from "express";
+import helmet from "helmet";
+import { resolveOptions, type KaelumOptions, type ResolvedOptions } from "./config.js";
+import { createRequestLogger } from "./core/requestLogger.js";
 import { HttpError, errorBody } from "./http-error.js";
+import { requestId } from "./middleware/request-id.js";
 import { RouteTable } from "./routing/table.js";
 import { flattenTree } from "./routing/tree.js";
 import type { DefinedRoutes, Middleware, RouteInfo, RouteTree } from "./routing/types.js";
@@ -23,17 +28,26 @@ export class Kaelum {
   readonly #table: RouteTable;
   #server: Server | undefined;
 
-  constructor() {
+  constructor(options: KaelumOptions = {}) {
+    const config = resolveOptions(options);
+
     this.express = express();
     this.express.disable("x-powered-by");
-    this.express.use(express.json());
-    this.express.use(express.urlencoded({ extended: true }));
+    this.express.set("trust proxy", config.trustProxy);
+    this.express.set("query parser", config.query);
+
+    for (const middleware of builtInMiddleware(config)) this.express.use(middleware);
 
     // Everything the user adds goes into this router, so it always runs before
     // the 404 and error handlers below, no matter when it is added.
     this.#router = express.Router();
     this.#table = new RouteTable(this.#router);
     this.express.use(this.#router);
+
+    if (config.health) {
+      const { path, check } = config.health;
+      this.route(path, { get: healthHandler(check) } as RouteTree<unknown, string>);
+    }
 
     this.express.use(notFound);
     this.express.use(handleError);
@@ -128,9 +142,47 @@ export class Kaelum {
   }
 }
 
-/** Create a Kaelum app. */
-export function createKaelum(): Kaelum {
-  return new Kaelum();
+/**
+ * Create a Kaelum app. With no options it starts with production-ready
+ * defaults: security headers, a body size limit, request IDs, request logs
+ * and `GET /health`.
+ */
+export function createKaelum(options?: KaelumOptions): Kaelum {
+  return new Kaelum(options);
+}
+
+/** The middleware Kaelum installs before any user code, in order. */
+function builtInMiddleware(config: ResolvedOptions): Middleware[] {
+  const stack: Middleware[] = [];
+
+  // First, so the ID is available to the logger and to every later error.
+  if (config.requestId) stack.push(requestId(config.requestId));
+  if (config.logs) stack.push(createRequestLogger(config.logs));
+  if (config.helmet) stack.push(helmet(config.helmet));
+  if (config.cors) stack.push(cors(config.cors));
+
+  if (config.body) {
+    const { limit, json, urlencoded } = config.body;
+    if (json) stack.push(express.json({ limit }));
+    if (urlencoded) stack.push(express.urlencoded({ limit, extended: config.query === "extended" }));
+  }
+
+  return stack;
+}
+
+function healthHandler(check: (() => unknown) | undefined) {
+  return async () => {
+    if (check) {
+      let ready: unknown;
+      try {
+        ready = await check();
+      } catch (cause) {
+        throw new HttpError(503, "Health check failed", { cause });
+      }
+      if (ready === false) throw new HttpError(503, "Health check failed");
+    }
+    return { status: "ok" };
+  };
 }
 
 /**

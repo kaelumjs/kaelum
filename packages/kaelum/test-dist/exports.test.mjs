@@ -35,7 +35,7 @@ test("subpaths: kaelum/validate and kaelum/test", async () => {
 test("ESM: the 2.0 API is exported by name", async () => {
   const { createKaelum, defineRoutes, HttpError, Kaelum, Context } = await import("kaelum");
 
-  const app = createKaelum();
+  const app = createKaelum({ health: false });
   assert.ok(app instanceof Kaelum);
   assert.equal(typeof Context, "function");
   assert.equal(new HttpError(404).status, 404);

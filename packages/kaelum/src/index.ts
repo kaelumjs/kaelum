@@ -14,6 +14,13 @@ export type * from "./types.js";
 // --- 2.0 API (in progress) --------------------------------------------------
 // Lives next to the 1.x factory above until it replaces it as the default export.
 export { Kaelum, createKaelum, defineRoutes } from "./app.js";
+export type {
+  BodyOptions,
+  CorsOptions,
+  HealthOptions,
+  KaelumOptions,
+  RequestIdOptions,
+} from "./config.js";
 export { Context } from "./context.js";
 export type { ContextRequest, ContextResponse, Responded } from "./context.js";
 export { HttpError } from "./http-error.js";

@@ -6,7 +6,7 @@ describe("Kaelum app", () => {
   let app: Kaelum;
 
   beforeEach(() => {
-    app = createKaelum();
+    app = createKaelum({ health: false });
   });
 
   describe("route tree", () => {

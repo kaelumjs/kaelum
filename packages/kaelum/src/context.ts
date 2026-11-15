@@ -67,6 +67,11 @@ export class Context<
     return ("body" in this.#validated ? this.#validated.body : this.req.raw.body) as Body;
   }
 
+  /** The request ID, when request IDs are enabled (they are by default). */
+  get id(): string | undefined {
+    return this.req.raw.id;
+  }
+
   /** Request headers, with lower-case names. */
   get headers(): Request["headers"] {
     return this.req.raw.headers;

@@ -1,0 +1,141 @@
+import type { HelmetOptions } from "helmet";
+import type { RequestLogFormat } from "./core/requestLogger.js";
+
+/** Options for cross-origin requests. Passed to the `cors` package. */
+export interface CorsOptions {
+  /** Allowed origin(s). `true` reflects the request origin; `"*"` allows any. */
+  origin?: boolean | string | RegExp | Array<string | RegExp>;
+  methods?: string | string[];
+  allowedHeaders?: string | string[];
+  exposedHeaders?: string | string[];
+  /** Send `Access-Control-Allow-Credentials`. Never combine with `origin: "*"`. */
+  credentials?: boolean;
+  /** Seconds a preflight response may be cached. */
+  maxAge?: number;
+}
+
+export interface RequestIdOptions {
+  /** Header read from the request and written to the response. Default `X-Request-Id`. */
+  header?: string;
+  /** Creates an ID when the request has none. Default `crypto.randomUUID`. */
+  generate?: () => string;
+}
+
+export interface HealthOptions {
+  /** Default `/health`. */
+  path?: string;
+  /**
+   * Readiness check, run on every request to the health endpoint. Throwing or
+   * returning `false` answers 503. Any other return value is ignored.
+   */
+  check?: () => unknown;
+}
+
+export interface BodyOptions {
+  /** Largest accepted body, as bytes or a string such as `"1mb"`. Default `"100kb"`. */
+  limit?: number | string;
+  /** Parse `application/json` bodies. Default `true`. */
+  json?: boolean;
+  /** Parse `application/x-www-form-urlencoded` bodies. Default `true`. */
+  urlencoded?: boolean;
+}
+
+/**
+ * Everything that can be configured when creating an app.
+ *
+ * Kaelum starts with production-ready defaults: security headers, a body size
+ * limit, request IDs, request logs and a health check are all on. Each option
+ * below turns a default off or adjusts it.
+ */
+export interface KaelumOptions {
+  security?: {
+    /** Security headers via Helmet. Default on. `false` disables, an object configures. */
+    helmet?: boolean | HelmetOptions;
+    /** Cross-origin requests. Default off. `true` allows any origin, an object configures. */
+    cors?: boolean | CorsOptions;
+  };
+
+  observability?: {
+    /** `X-Request-Id` on every request and response, and `c.id`. Default on. */
+    requestId?: boolean | RequestIdOptions;
+    /**
+     * One log line per request. Default: `"dev"` (colored) in development,
+     * `"tiny"` in production, off when `NODE_ENV` is `test`.
+     */
+    logs?: boolean | RequestLogFormat;
+  };
+
+  /** Body parsing. `false` disables it entirely. */
+  body?: false | BodyOptions;
+
+  /**
+   * How query strings are parsed. `"simple"` (default) gives flat keys and is
+   * the safer choice; `"extended"` turns `filter[tag]=x` into nested objects.
+   */
+  query?: "simple" | "extended";
+
+  /**
+   * Trust `X-Forwarded-*` headers. Needed behind a reverse proxy or load
+   * balancer for `req.ip` and HTTPS detection to be right. Default `false`.
+   * Accepts the same values as Express's `trust proxy` setting.
+   */
+  trustProxy?: boolean | number | string | string[];
+
+  /** Health check endpoint. Default `GET /health`. `false` disables, a string sets the path. */
+  health?: boolean | string | HealthOptions;
+}
+
+/** `KaelumOptions` with every default filled in. */
+export interface ResolvedOptions {
+  helmet: false | HelmetOptions;
+  cors: false | CorsOptions;
+  requestId: false | Required<RequestIdOptions>;
+  logs: false | RequestLogFormat;
+  body: false | Required<BodyOptions>;
+  query: "simple" | "extended";
+  trustProxy: boolean | number | string | string[];
+  health: false | (Required<Pick<HealthOptions, "path">> & Pick<HealthOptions, "check">);
+}
+
+/** `true` means "on with defaults", `false` means off, an object configures. */
+function toggle<T extends object>(value: boolean | T | undefined, enabledByDefault: boolean): false | T {
+  if (value === undefined) return enabledByDefault ? ({} as T) : false;
+  if (typeof value === "boolean") return value ? ({} as T) : false;
+  return value;
+}
+
+function defaultLogs(env: string | undefined): false | RequestLogFormat {
+  if (env === "test") return false;
+  return env === "production" ? "tiny" : "dev";
+}
+
+export function resolveOptions(options: KaelumOptions = {}, env = process.env.NODE_ENV): ResolvedOptions {
+  const { security = {}, observability = {} } = options;
+
+  const requestId = toggle<RequestIdOptions>(observability.requestId, true);
+  const body = options.body === false ? false : (options.body ?? {});
+  const health = typeof options.health === "string" ? { path: options.health } : toggle(options.health, true);
+
+  let logs: false | RequestLogFormat;
+  if (observability.logs === undefined) logs = defaultLogs(env);
+  else if (observability.logs === true) logs = defaultLogs(env) || "dev";
+  else logs = observability.logs;
+
+  return {
+    helmet: toggle<HelmetOptions>(security.helmet, true),
+    cors: toggle<CorsOptions>(security.cors, false),
+    requestId: requestId && {
+      header: requestId.header ?? "X-Request-Id",
+      generate: requestId.generate ?? (() => crypto.randomUUID()),
+    },
+    logs,
+    body: body && {
+      limit: body.limit ?? "100kb",
+      json: body.json ?? true,
+      urlencoded: body.urlencoded ?? true,
+    },
+    query: options.query ?? "simple",
+    trustProxy: options.trustProxy ?? false,
+    health: health && { path: health.path ?? "/health", check: health.check },
+  };
+}
