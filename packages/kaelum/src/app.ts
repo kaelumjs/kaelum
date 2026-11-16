@@ -9,10 +9,39 @@ import { createRateLimiter } from "./core/rateLimit.js";
 import { createRequestLogger } from "./core/requestLogger.js";
 import { serverTiming } from "./core/timing.js";
 import { HttpError, errorBody } from "./http-error.js";
+import { createLogger, type LogSink, type Logger } from "./logger.js";
 import { requestId } from "./middleware/request-id.js";
 import { RouteTable } from "./routing/table.js";
 import { flattenTree } from "./routing/tree.js";
-import type { DefinedRoutes, Middleware, RouteInfo, RouteTree } from "./routing/types.js";
+import type {
+  DefinedRoutes,
+  Method,
+  Middleware,
+  ResourceActions,
+  RouteInfo,
+  RouteTree,
+  SingleEndpoint,
+} from "./routing/types.js";
+
+/**
+ * A plugin: a function that receives the app and sets something up on it
+ * (routes, middleware, `onClose` hooks).
+ *
+ * @example
+ * const metrics: Plugin<{ path: string }> = (app, { path }) => {
+ *   app.route(path, { get: () => collect() });
+ * };
+ *
+ * app.plugin(metrics, { path: "/metrics" });
+ */
+export type Plugin<Options = undefined> = (app: Kaelum, options: Options) => void;
+
+type PluginArgs<Options> = undefined extends Options ? [options?: Options] : [options: Options];
+
+/** A function run when the app closes. May be async. */
+export type CloseHook = () => unknown;
+
+const RESOURCE_KEYS: ReadonlySet<string> = new Set(["use", "list", "create", "get", "update", "replace", "remove"]);
 
 /**
  * A Kaelum application.
@@ -28,12 +57,21 @@ export class Kaelum {
    */
   readonly express: Express;
 
+  /** The app's logger. Inside a handler, prefer `c.log`, which adds the request ID. */
+  readonly log: Logger;
+
   readonly #router: Router;
   readonly #table: RouteTable;
+  readonly #shutdown: ResolvedOptions["shutdown"];
+  readonly #closeHooks: CloseHook[] = [];
+  readonly #signalHandlers = new Map<NodeJS.Signals, () => void>();
   #server: Server | undefined;
+  #closing: Promise<void> | undefined;
 
   constructor(options: KaelumOptions = {}) {
     const config = resolveOptions(options);
+    this.log = createLogger(config.logger);
+    this.#shutdown = config.shutdown;
 
     this.express = express();
     this.express.disable("x-powered-by");
@@ -45,7 +83,7 @@ export class Kaelum {
     // Everything the user adds goes into this router, so it always runs before
     // the 404 and error handlers below, no matter when it is added.
     this.#router = express.Router();
-    this.#table = new RouteTable(this.#router);
+    this.#table = new RouteTable(this.#router, config.logger);
     this.express.use(this.#router);
 
     if (config.health) {
@@ -54,7 +92,7 @@ export class Kaelum {
     }
 
     this.express.use(notFound);
-    this.express.use(handleError);
+    this.express.use(errorHandler(config.logger));
   }
 
   /**
@@ -110,6 +148,95 @@ export class Kaelum {
     return this;
   }
 
+  /** Register a single `GET` endpoint. Shortcut for `app.route(path, { get })`. */
+  get<const P extends string, T extends [unknown]>(path: P, ...endpoint: SingleEndpoint<T, P>): this {
+    return this.#single("get", path, endpoint[0]);
+  }
+
+  /** Register a single `POST` endpoint. Shortcut for `app.route(path, { post })`. */
+  post<const P extends string, T extends [unknown]>(path: P, ...endpoint: SingleEndpoint<T, P>): this {
+    return this.#single("post", path, endpoint[0]);
+  }
+
+  /** Register a single `PUT` endpoint. Shortcut for `app.route(path, { put })`. */
+  put<const P extends string, T extends [unknown]>(path: P, ...endpoint: SingleEndpoint<T, P>): this {
+    return this.#single("put", path, endpoint[0]);
+  }
+
+  /** Register a single `PATCH` endpoint. Shortcut for `app.route(path, { patch })`. */
+  patch<const P extends string, T extends [unknown]>(path: P, ...endpoint: SingleEndpoint<T, P>): this {
+    return this.#single("patch", path, endpoint[0]);
+  }
+
+  /** Register a single `DELETE` endpoint. Shortcut for `app.route(path, { delete })`. */
+  delete<const P extends string, T extends [unknown]>(path: P, ...endpoint: SingleEndpoint<T, P>): this {
+    return this.#single("delete", path, endpoint[0]);
+  }
+
+  /**
+   * Register the routes of a CRUD resource by convention.
+   *
+   * @example
+   * app.resource("/users", {
+   *   list: () => db.users.all(),                      // GET    /users
+   *   create: { body: NewUser, handler: createUser },  // POST   /users
+   *   get: (c) => db.users.find(c.params.id),          // GET    /users/:id
+   *   update: (c) => db.users.patch(c.params.id, c.body), // PATCH /users/:id
+   *   remove: (c) => db.users.delete(c.params.id),     // DELETE /users/:id
+   * });
+   */
+  resource<const P extends string, T>(path: P, actions: ResourceActions<T, P>): this {
+    if (typeof actions !== "object" || actions === null || Array.isArray(actions)) {
+      throw new TypeError(`resource ${path}: expected an object of actions`);
+    }
+
+    const given = actions as Record<string, unknown>;
+    const unknown = Object.keys(given).find((key) => !RESOURCE_KEYS.has(key));
+    if (unknown !== undefined) {
+      throw new TypeError(
+        `resource ${path}: unknown key "${unknown}". Expected ${[...RESOURCE_KEYS].join(", ")}`
+      );
+    }
+
+    const item = defined({ get: given.get, patch: given.update, put: given.replace, delete: given.remove });
+    const tree = defined({
+      use: given.use,
+      get: given.list,
+      post: given.create,
+      "/:id": Object.keys(item).length > 0 ? item : undefined,
+    });
+
+    return this.route({ path, tree });
+  }
+
+  /**
+   * Run a plugin against this app.
+   *
+   * @example
+   * app.plugin(metrics, { path: "/metrics" });
+   */
+  plugin<Options = undefined>(plugin: Plugin<Options>, ...[options]: PluginArgs<Options>): this {
+    if (typeof plugin !== "function") {
+      throw new TypeError(`plugin: expected a function, got ${typeof plugin}`);
+    }
+    plugin(this, options as Options);
+    return this;
+  }
+
+  /**
+   * Run a function when the app closes, after open requests have finished:
+   * the place to close database connections, flush queues and the like.
+   * Hooks run in the order they were added; a failing hook is logged and
+   * does not stop the others.
+   */
+  onClose(hook: CloseHook): this {
+    if (typeof hook !== "function") {
+      throw new TypeError(`onClose: expected a function, got ${typeof hook}`);
+    }
+    this.#closeHooks.push(hook);
+    return this;
+  }
+
   /** Every registered endpoint, in registration order. */
   routes(): RouteInfo[] {
     return this.#table.list();
@@ -128,22 +255,81 @@ export class Kaelum {
       const server = this.express.listen(Number(port));
       server.once("listening", () => {
         this.#server = server;
+        this.#watchSignals();
         resolve(server);
       });
       server.once("error", reject);
     });
   }
 
-  /** Stop listening and wait for open connections to finish. */
+  /**
+   * Stop listening, wait for open requests to finish (up to the shutdown
+   * timeout), then run the `onClose` hooks. Safe to call more than once.
+   */
   close(): Promise<void> {
-    const server = this.#server;
-    if (!server) return Promise.resolve();
-
-    this.#server = undefined;
-    return new Promise((resolve, reject) => {
-      server.close((err) => (err ? reject(err) : resolve()));
-    });
+    return (this.#closing ??= this.#close().finally(() => {
+      this.#closing = undefined;
+    }));
   }
+
+  async #close(): Promise<void> {
+    this.#unwatchSignals();
+
+    const server = this.#server;
+    this.#server = undefined;
+    if (server) await closeServer(server, this.#shutdown ? this.#shutdown.timeout : 10_000);
+
+    for (const hook of this.#closeHooks) {
+      try {
+        await hook();
+      } catch (err) {
+        this.log.error("onClose hook failed", { err });
+      }
+    }
+  }
+
+  #single(method: Method, path: string, endpoint: unknown): this {
+    return this.route({ path, tree: { [method]: endpoint } });
+  }
+
+  #watchSignals(): void {
+    if (!this.#shutdown) return;
+
+    for (const signal of this.#shutdown.signals) {
+      const handler = (): void => {
+        this.log.info(`Received ${signal}, shutting down`);
+        this.close().then(
+          () => process.exit(0),
+          () => process.exit(1)
+        );
+      };
+      this.#signalHandlers.set(signal, handler);
+      process.on(signal, handler);
+    }
+  }
+
+  #unwatchSignals(): void {
+    for (const [signal, handler] of this.#signalHandlers) process.removeListener(signal, handler);
+    this.#signalHandlers.clear();
+  }
+}
+
+/** Close a server, cutting the connections still open after `timeout` ms. */
+function closeServer(server: Server, timeout: number): Promise<void> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => server.closeAllConnections(), timeout);
+    timer.unref();
+
+    server.close(() => {
+      clearTimeout(timer);
+      resolve();
+    });
+  });
+}
+
+/** A copy of `object` without its `undefined` values. */
+function defined(object: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(object).filter(([, value]) => value !== undefined));
 }
 
 /**
@@ -220,24 +406,26 @@ function notFound(_req: Request, _res: Response, next: NextFunction): void {
   next(new HttpError(404));
 }
 
-function handleError(err: unknown, _req: Request, res: Response, next: NextFunction): void {
-  // The response already started: all that is left is to let Express close it.
-  if (res.headersSent) return next(err);
+function errorHandler(sink: LogSink) {
+  return (err: unknown, req: Request, res: Response, next: NextFunction): void => {
+    // The response already started: all that is left is to let Express close it.
+    if (res.headersSent) return next(err);
 
-  if (err instanceof HttpError) {
-    res.status(err.status).json(err.toJSON());
-    return;
-  }
+    if (err instanceof HttpError) {
+      res.status(err.status).json(err.toJSON());
+      return;
+    }
 
-  // Errors from body parsers and other Express middleware carry a status.
-  const status = statusOf(err);
-  if (status !== undefined && status < 500) {
-    res.status(status).json(errorBody(status, (err as Error).message));
-    return;
-  }
+    // Errors from body parsers and other Express middleware carry a status.
+    const status = statusOf(err);
+    if (status !== undefined && status < 500) {
+      res.status(status).json(errorBody(status, (err as Error).message));
+      return;
+    }
 
-  console.error(err);
-  res.status(500).json(errorBody(500));
+    createLogger(sink, req.id).error(`Unhandled error in ${req.method} ${req.path}`, { err });
+    res.status(500).json(errorBody(500));
+  };
 }
 
 function statusOf(err: unknown): number | undefined {
