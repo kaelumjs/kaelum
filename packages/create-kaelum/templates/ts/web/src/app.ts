@@ -1,43 +1,13 @@
-import kaelum from "kaelum";
-import { routes } from "./routes";
+import { fileURLToPath } from "node:url";
+import kaelum, { serveStatic } from "kaelum";
+import { pageRoutes } from "./routes/pages.ts";
 
-const app = kaelum();
+/** Build the app without starting it, so tests can use it too. */
+export function createApp() {
+  const app = kaelum();
 
-// Configure security, static files, and body parsing
-app.setConfig({
-  cors: true,
-  helmet: true,
-  static: "public",
-  bodyParser: true,
-});
+  app.use(serveStatic(fileURLToPath(new URL("../public", import.meta.url))));
+  app.route(pageRoutes);
 
-// Observability: X-Request-Id + Server-Timing headers
-app.requestId();
-app.timing();
-
-// Redirect /about/ -> /about
-app.useTrimTrailingSlash();
-
-// Register routes
-routes(app);
-
-// Health check endpoint
-app.healthCheck("/health");
-
-// Graceful shutdown hook
-app.onShutdown(() => {
-  console.log("Cleaning up resources...");
-});
-
-// 405 for known paths with the wrong method, then a custom HTML 404
-app.useMethodNotAllowed();
-app.notFound((_req: any, res: any) => {
-  res.status(404).send("<h1>404</h1><p>Page not found.</p>");
-});
-
-// Error handler (returns JSON on errors)
-app.useErrorHandler({ exposeStack: false });
-
-// Start server
-const PORT = Number(process.env.PORT) || 3000;
-app.start(PORT);
+  return app;
+}

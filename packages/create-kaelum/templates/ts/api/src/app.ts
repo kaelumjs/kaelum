@@ -1,44 +1,19 @@
 import kaelum from "kaelum";
-import { routes } from "./routes";
+import { userRoutes } from "./routes/users.ts";
 
-const app = kaelum();
+/**
+ * Build the app without starting it, so tests can use it too.
+ * Kaelum starts with security headers, request IDs, logs, a body size limit,
+ * GET /health and graceful shutdown already on.
+ */
+export function createApp() {
+  const app = kaelum({
+    security: { cors: true },
+  });
 
-// Configure security and logging
-app.setConfig({
-  cors: true,
-  helmet: true,
-  logs: true,
-  bodyParser: true,
-});
+  app.route(userRoutes);
 
-// Observability: X-Request-Id + Server-Timing headers
-app.requestId();
-app.timing();
+  app.get("/meta", () => ({ framework: "Kaelum" }));
 
-// Semantic response helpers: res.ok(), res.created(), res.notFound(), ...
-app.useResponseHelpers();
-
-// ETag + conditional requests (304 Not Modified)
-app.useEtag();
-
-// Mount routes
-routes(app);
-
-// Health check endpoint
-app.healthCheck("/health");
-
-// Graceful shutdown hook
-app.onShutdown(() => {
-  console.log("Cleaning up resources...");
-});
-
-// 405 for known paths with the wrong method, then 404 for everything else
-app.useMethodNotAllowed();
-app.notFound();
-
-// Error handler (JSON responses)
-app.useErrorHandler({ exposeStack: false });
-
-// Start server
-const PORT = Number(process.env.PORT) || 4000;
-app.start(PORT);
+  return app;
+}

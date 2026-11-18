@@ -24,13 +24,14 @@ test("the 1.x subpaths are gone", async () => {
 });
 
 test("named exports", async () => {
-  const { kaelum, defineRoutes, HttpError, Context, k, rateLimit, ipRestriction } = await import("kaelum");
+  const { kaelum, defineRoutes, HttpError, Context, k, rateLimit, ipRestriction, serveStatic } = await import("kaelum");
 
   assert.equal(typeof Context, "function");
   assert.equal(new HttpError(404).status, 404);
   assert.equal(typeof k.string, "function");
   assert.equal(typeof rateLimit(), "function");
   assert.equal(typeof ipRestriction(), "function");
+  assert.equal(typeof serveStatic("."), "function");
 
   const app = kaelum({ health: false, shutdown: false });
   app.route(defineRoutes("/ping")({ get: () => "pong" }));

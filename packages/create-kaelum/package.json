@@ -11,7 +11,7 @@
     "templates"
   ],
   "scripts": {
-    "test": "node --test",
+    "test": "node --test \"test/**/*.test.js\"",
     "prepack": "node -e \"require('fs').copyFileSync('../../LICENSE','LICENSE')\""
   },
   "keywords": [

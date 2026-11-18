@@ -70,8 +70,8 @@ async function askMissing(defaults) {
       name: "template",
       message: "Choose your template:",
       choices: [
-        { name: "web — MVC with views & static files", value: "web" },
-        { name: "api — REST API ready", value: "api" },
+        { name: "web — pages, views and static files", value: "web" },
+        { name: "api — REST API with validation", value: "api" },
       ],
       default: "web",
     });
@@ -171,13 +171,13 @@ async function createProject(defaults = {}) {
 function printNextSteps({ isTypeScript, install }) {
   console.log("\n📌 Next steps:");
   if (install) console.log(`   ${install}`);
+  console.log(`   npm run dev     Start with file watching`);
+  console.log(`   npm test        Run the tests`);
   if (isTypeScript) {
-    console.log(`   npm run dev     Start development server (tsx watch)`);
-    console.log(`   npm run build   Compile TypeScript to JavaScript`);
-    console.log(`   npm start       Run compiled output\n`);
+    console.log(`   npm run build   Compile to dist/`);
+    console.log(`   npm start       Run the compiled app\n`);
   } else {
-    console.log(`   npm start       Start the server`);
-    console.log(`   npm run dev     Start with file watching\n`);
+    console.log(`   npm start       Start the server\n`);
   }
 }
 
