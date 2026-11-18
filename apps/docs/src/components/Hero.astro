@@ -1,0 +1,193 @@
+---
+// The home page gets its own hero; every other splash page (the 404, for
+// example) keeps Starlight's.
+import Default from "@astrojs/starlight/components/Hero.astro";
+import { Icon } from "@astrojs/starlight/components";
+import CodeTabs from "./home/CodeTabs.astro";
+
+const { entry } = Astro.locals.starlightRoute;
+const isHome = entry.id === "index" || entry.id === "";
+const install = "npm create kaelum@next my-app";
+---
+
+{
+  !isHome ? (
+    <Default />
+  ) : (
+    <section class="k-hero not-content">
+      <div class="k-hero__text">
+        <a class="k-pill" href="/changelog/">
+          <span class="k-pill__tag">2.0 alpha</span>
+          <span>See what changed</span>
+          <Icon name="right-arrow" size="0.9rem" />
+        </a>
+
+        <h1>
+          Express, <span class="k-accent">production-ready</span> by default
+        </h1>
+
+        {entry.data.hero?.tagline && <p class="k-hero__tagline" set:html={entry.data.hero.tagline} />}
+
+        <div class="k-install">
+          <span class="k-install__prompt" aria-hidden="true">$</span>
+          <code>{install}</code>
+          <button type="button" class="k-install__copy" data-copy={install} aria-label="Copy the install command">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="9" y="9" width="12" height="12" rx="2.5" />
+              <path d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5" />
+            </svg>
+            <span data-copy-label>Copy</span>
+          </button>
+        </div>
+
+        <div class="k-hero__actions">
+          <a class="k-button k-button--primary" href="/getting-started/quick-start/">
+            Get started <Icon name="right-arrow" size="1rem" />
+          </a>
+          <a class="k-button" href="/guide/routing/">Read the guide</a>
+        </div>
+      </div>
+
+      <div class="k-hero__code">
+        <CodeTabs />
+      </div>
+    </section>
+  )
+}
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>("[data-copy]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const label = button.querySelector("[data-copy-label]");
+      try {
+        await navigator.clipboard.writeText(button.dataset.copy ?? "");
+        if (label) label.textContent = "Copied";
+      } catch {
+        if (label) label.textContent = "Press Ctrl+C";
+      }
+      setTimeout(() => label && (label.textContent = "Copy"), 1800);
+    });
+  });
+</script>
+
+<style>
+  .k-hero {
+    display: grid;
+    gap: 2.5rem;
+    align-items: center;
+    padding-block: 2rem 0.5rem;
+  }
+
+  @media (min-width: 60rem) {
+    .k-hero {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+      gap: 3.5rem;
+      padding-block: 4rem 1rem;
+    }
+  }
+
+  .k-hero__text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+  }
+
+  h1 {
+    margin: 0;
+    color: var(--sl-color-white);
+    font-size: clamp(2.3rem, 4.6vw, 3.4rem);
+    font-weight: 750;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+  }
+
+  .k-hero__tagline {
+    max-width: 32rem;
+    margin: 0;
+    color: var(--sl-color-gray-2);
+    font-size: var(--sl-text-lg);
+  }
+
+  .k-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.25rem 0.75rem 0.25rem 0.25rem;
+    border: 1px solid var(--k-border);
+    border-radius: 999px;
+    color: var(--sl-color-gray-2);
+    font-size: var(--sl-text-xs);
+    text-decoration: none;
+  }
+
+  .k-pill:hover {
+    border-color: var(--k-border-strong);
+    color: var(--sl-color-white);
+  }
+
+  .k-pill__tag {
+    flex-shrink: 0;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background: var(--sl-color-accent-low);
+    color: var(--sl-color-accent-high);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  :global(:root[data-theme="light"]) .k-pill__tag {
+    color: var(--sl-color-accent);
+  }
+
+  .k-install {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 30rem;
+    padding: 0.35rem 0.35rem 0.35rem 1rem;
+    border: 1px solid var(--k-border);
+    border-radius: var(--k-radius);
+    background: var(--k-surface);
+    font-family: var(--__sl-font-mono, var(--sl-font-system-mono));
+    font-size: var(--sl-text-sm);
+  }
+
+  .k-install code {
+    flex: 1;
+    overflow-x: auto;
+    background: none;
+    color: var(--sl-color-white);
+    white-space: nowrap;
+  }
+
+  .k-install__prompt {
+    color: var(--sl-color-gray-3);
+  }
+
+  .k-install__copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid var(--k-border);
+    border-radius: var(--k-radius-sm);
+    background: var(--sl-color-bg);
+    color: var(--sl-color-gray-2);
+    font-family: var(--sl-font);
+    font-size: var(--sl-text-xs);
+    cursor: pointer;
+  }
+
+  .k-install__copy:hover {
+    border-color: var(--k-border-strong);
+    color: var(--sl-color-white);
+  }
+
+  .k-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+</style>

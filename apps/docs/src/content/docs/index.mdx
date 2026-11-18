@@ -1,151 +1,48 @@
 ---
 title: Kaelum
-description: Build web apps and REST APIs with almost zero boilerplate. A thin ergonomic layer over Express.
+description: Express, production-ready by default. Typed route trees, schema validation and secure defaults for Node.js.
 template: splash
+editUrl: false
+pagefind: false
 hero:
-  title: Build faster apps with less boilerplate
-  tagline: A minimalist Node.js framework for web apps and REST APIs. Same Express power, zero repetitive setup.
-  actions:
-    - text: Get started
-      link: /getting-started/introduction/overview/
-      icon: right-arrow
-    - text: API reference
-      link: /api-reference/start/
-      variant: minimal
+  tagline: Typed route trees, validation from any schema library and production defaults, on the Express you already know.
 ---
 
-import { Card, CardGrid, LinkCard, Steps } from "@astrojs/starlight/components";
+import Compare from "../../components/home/Compare.astro";
+import Features from "../../components/home/Features.astro";
+import RouteTree from "../../components/home/RouteTree.astro";
 
-## Everything you need out of the box
+<div class="k-section not-content">
+  <span class="k-eyebrow">Why Kaelum</span>
+  <h2>The setup you would write anyway, done</h2>
+  <p>Everything an Express app needs before it is safe to deploy, on from the first line.</p>
+</div>
 
-<CardGrid>
-  <Card title="Zero-config start" icon="rocket">
-    JSON parsing, static files and EJS views are pre-configured. Write routes
-    and go.
-  </Card>
-  <Card title="Tree routing" icon="seti:folder">
-    Nested routes with `addRoute` and `apiRoute`. Define a whole API tree in a
-    single object.
-  </Card>
-  <Card title="Security built in" icon="approve-check-circle">
-    CORS, Helmet, CSRF, rate limiting and IP restriction, each one toggle away.
-  </Card>
-  <Card title="CLI scaffolding" icon="seti:config">
-    `npx kaelum create` with web and API templates, in JavaScript or
-    TypeScript.
-  </Card>
-</CardGrid>
+<Features />
 
-## Get started in three steps
+<div class="k-section not-content">
+  <span class="k-eyebrow">Route trees</span>
+  <h2>Your API, shaped like your API</h2>
+  <p>Nest paths, share middleware with <code>use</code>, and see exactly which routes you get. Hover a line to follow it.</p>
+</div>
 
-<Steps>
+<RouteTree />
 
-1. **Scaffold a project** with the interactive CLI.
+<div class="k-section not-content">
+  <span class="k-eyebrow">Less code</span>
+  <h2>Same endpoint, a fraction of the code</h2>
+  <p>A validated <code>POST /users</code> with security headers, a body limit, request IDs, a health check, JSON errors and graceful shutdown. In Kaelum all of that is the default.</p>
+</div>
 
-   ```bash
-   npx kaelum create my-app
-   cd my-app
-   npm install
-   ```
+<Compare />
 
-2. **Configure your app** with one config object.
-
-   ```js
-   const app = require("kaelum")();
-
-   app.setConfig({
-     cors: true,
-     helmet: true,
-     logs: "dev",
-     static: "public",
-   });
-   ```
-
-3. **Add routes and start the server.**
-
-   ```js
-   app.apiRoute("users", {
-     get: (req, res) => res.json([]),
-     post: (req, res) => res.status(201).json(req.body),
-     "/:id": {
-       get: (req, res) => res.json({ id: req.params.id }),
-       delete: (req, res) => res.status(204).send(),
-     },
-   });
-
-   app.healthCheck();
-   app.useErrorHandler();
-   app.start(3000);
-   ```
-
-</Steps>
-
-## Explore the documentation
-
-<CardGrid>
-  <LinkCard
-    title="Getting started"
-    description="What Kaelum is, how to install it and how a project is laid out."
-    href="/getting-started/introduction/overview/"
-  />
-  <LinkCard
-    title="Guides"
-    description="Middleware, error handling, validation, route groups and more."
-    href="/guide/core-functions/middleware/"
-  />
-  <LinkCard
-    title="API reference"
-    description="Every method on the Kaelum app, with options and examples."
-    href="/api-reference/start/"
-  />
-  <LinkCard
-    title="Examples"
-    description="A complete web application and a REST API."
-    href="/examples/web-app/"
-  />
-</CardGrid>
-
-## Frequently asked questions
-
-<details>
-<summary>What is Kaelum?</summary>
-
-Kaelum is a minimalist Node.js framework built on top of Express. It removes
-the boilerplate of body parsing, CORS, Helmet and route registration so you can
-focus on business logic.
-
-</details>
-
-<details>
-<summary>Do I need to know Express?</summary>
-
-Not necessarily, but everything you know about Express still applies. You can
-mix Kaelum helpers with any Express middleware.
-
-</details>
-
-<details>
-<summary>How do I install Kaelum?</summary>
-
-Run `npx kaelum create my-app` to scaffold a new project, or
-`npm install kaelum` to add it to an existing one. Node.js 24.22.1+ is
-required.
-
-</details>
-
-<details>
-<summary>Can I use my own Express middleware?</summary>
-
-Yes. The Kaelum app instance is a standard Express app, so `app.use()` and any
-Express-compatible middleware work alongside Kaelum helpers.
-
-</details>
-
-<details>
-<summary>Where can I get help or report a bug?</summary>
-
-Open an issue on [GitHub](https://github.com/kaelumjs/kaelum/issues) with a
-minimal reproduction, your Node.js version and the Kaelum version you are
-using.
-
-</details>
+<div class="k-cta not-content">
+  <div>
+    <h2>Start a project in one command</h2>
+    <p>JavaScript or TypeScript, API or web, with tests included.</p>
+  </div>
+  <div class="k-actions">
+    <a class="k-button k-button--primary" href="/getting-started/quick-start/">Quick start</a>
+    <a class="k-button" href="/getting-started/migrating-from-1x/">Coming from 1.x?</a>
+  </div>
+</div>
