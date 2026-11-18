@@ -1,5 +1,4 @@
-// core/csrf.js
-// Kaelum - CSRF Protection Middleware
+// CSRF protection.
 //
 // Provides two complementary CSRF protection modes:
 //
@@ -12,10 +11,25 @@
 //
 // Safe HTTP methods (GET, HEAD, OPTIONS, TRACE) are always skipped per RFC 7231.
 
-import crypto from "crypto";
-import type { NextFunction, Request, Response } from "express";
+import crypto from "node:crypto";
+import type { CookieOptions, NextFunction, Request, Response } from "express";
 import { errorBody } from "../http-error.js";
-import type { CsrfOptions } from "../types.js";
+
+/** Options shared by both CSRF strategies. */
+export interface CsrfOptions {
+  /** Allowed origin(s) for the origin check. Defaults to the request's own host. */
+  origin?: string | string[];
+  /** Paths that are not checked: exact, or a prefix ending in `/*`. */
+  exclude?: string[];
+  /** Methods to protect. Default POST, PUT, PATCH, DELETE. */
+  methods?: string[];
+  /** Cookie name for the token strategy. Default `csrf-token`. */
+  cookie?: string;
+  /** Header name for the token strategy. Default `X-CSRF-Token`. */
+  header?: string;
+  /** Extra options for the token cookie. */
+  cookieOptions?: CookieOptions;
+}
 
 type CsrfRequest = Request & { _csrfToken?: string };
 

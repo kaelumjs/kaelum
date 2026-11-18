@@ -14,7 +14,7 @@ export interface TestResponse {
   status: number;
   headers: Headers;
   /** The parsed JSON for a JSON response, the text otherwise, `undefined` when empty. */
-  // `any` on purpose: tests assert on it freely.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tests assert on it freely
   body: any;
   /** The raw response body. */
   text: string;

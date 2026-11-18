@@ -1,8 +1,8 @@
 import request from "supertest";
-import createApp from "../../src/createApp.js";
-import { matchesCIDR } from "../../src/core/ipRestriction.js";
+import express from "express";
+import { ipRestriction, matchesCIDR } from "../../src/middleware/ip-restriction.js";
 
-describe("core/ipRestriction", () => {
+describe("ipRestriction", () => {
   describe("CIDR matching", () => {
     it("matches exact IP", () => {
       expect(matchesCIDR("192.168.1.5", "192.168.1.5")).toBe(true);
@@ -31,12 +31,12 @@ describe("core/ipRestriction", () => {
 
   describe("middleware behaviour", () => {
     it("allows IPs in the allow list even when deny catches all", async () => {
-      const app = createApp();
+      const app = express();
       app.set("trust proxy", true);
-      app.ipRestriction({
+      app.use(ipRestriction({
         allow: ["127.0.0.1"],
         deny: ["0.0.0.0/0"],
-      });
+      }));
       app.get("/secret", (req, res) => res.json({ ok: true }));
 
       const res = await request(app).get("/secret");
@@ -45,11 +45,11 @@ describe("core/ipRestriction", () => {
     });
 
     it("blocks IPs in the deny list", async () => {
-      const app = createApp();
+      const app = express();
       app.set("trust proxy", false);
-      app.ipRestriction({
+      app.use(ipRestriction({
         deny: ["0.0.0.0/0"],
-      });
+      }));
       app.get("/blocked", (req, res) => res.json({ ok: true }));
 
       // supertest connects from 127.0.0.1 which matches 0.0.0.0/0
@@ -59,13 +59,13 @@ describe("core/ipRestriction", () => {
     });
 
     it("accepts a custom onDenied handler", async () => {
-      const app = createApp();
-      app.ipRestriction({
+      const app = express();
+      app.use(ipRestriction({
         deny: ["0.0.0.0/0"],
         onDenied: (req, res) => {
           res.status(403).json({ custom: "You shall not pass" });
         },
-      });
+      }));
       app.get("/guarded", (req, res) => res.json({ ok: true }));
 
       const res = await request(app).get("/guarded");
@@ -74,27 +74,13 @@ describe("core/ipRestriction", () => {
     });
 
     it("allows all traffic when no rules are configured", async () => {
-      const app = createApp();
-      app.ipRestriction({ allow: [], deny: [] });
+      const app = express();
+      app.use(ipRestriction({ allow: [], deny: [] }));
       app.get("/open", (req, res) => res.json({ open: true }));
 
       const res = await request(app).get("/open");
       expect(res.status).toBe(200);
     });
 
-    it("supports setConfig({ ipRestriction: {...} })", async () => {
-      const app = createApp();
-      app.setConfig({
-        ipRestriction: {
-          allow: ["127.0.0.1"],
-          deny: ["0.0.0.0/0"],
-        },
-      });
-      app.get("/cfg", (req, res) => res.json({ via: "config" }));
-
-      const res = await request(app).get("/cfg");
-      // localhost (127.0.0.1) is in allow list so should pass
-      expect(res.status).toBe(200);
-    });
   });
 });

@@ -1,9 +1,9 @@
 // Type-level tests for `app.resource`, the method shortcuts and plugins.
 // Checked by `pnpm typecheck`, never run.
 import { expectTypeOf } from "vitest";
-import { createKaelum, k, type Logger, type Middleware, type Plugin } from "../../src/index.js";
+import { kaelum, k, type Logger, type Middleware, type Plugin } from "../../src/index.js";
 
-const app = createKaelum();
+const app = kaelum();
 declare const auth: Middleware;
 
 // --- resource: collection actions get the path, item actions get `:id` -------

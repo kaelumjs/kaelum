@@ -1,10 +1,43 @@
-// core/rateLimit.js
-// Kaelum built-in rate limiting middleware.
-// Zero-dependency, in-memory sliding-window rate limiter.
+// In-memory, fixed-window rate limiter. No dependencies.
 
 import type { NextFunction, Request, Response } from "express";
 import { errorBody } from "../http-error.js";
-import type { RateLimitConfig } from "../types.js";
+
+/** Where hit counts are kept. Implement it to share limits across processes (Redis...). */
+export interface RateLimitStore {
+  increment(key: string): { totalHits: number; resetTime: number };
+  resetKey(key: string): void;
+  shutdown(): void;
+}
+
+export interface RateLimitOptions {
+  /** Window length in ms. Default 15 minutes. */
+  windowMs?: number;
+  /** Requests allowed per window and key. Default 100. */
+  max?: number;
+  /** Response when limited: a message for the standard error body, or a body of your own. */
+  message?: string | object;
+  /** Status when limited. Default 429. */
+  statusCode?: number;
+  /** What identifies a client. Default `req.ip`. */
+  keyGenerator?: (req: Request) => string;
+  /** Requests that are never counted. */
+  skip?: (req: Request) => boolean;
+  /** Send the `RateLimit-*` and `Retry-After` headers. Default true. */
+  headers?: boolean;
+  /** Default: in memory, per process. */
+  store?: RateLimitStore;
+}
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace -- augmenting Express's global types requires it
+  namespace Express {
+    interface Request {
+      /** Set by the rate limiter. */
+      rateLimit?: { limit: number; remaining: number; resetTime: number };
+    }
+  }
+}
 
 /**
  * In-memory store for tracking request counts per key.
@@ -97,13 +130,13 @@ class MemoryStore {
  * @param {Object}   [options.store]             - custom store (must implement increment/resetKey/shutdown)
  * @returns {Function} Express middleware
  */
-function createRateLimiter(options: RateLimitConfig = {}) {
+function rateLimit(options: RateLimitOptions = {}) {
   const {
     windowMs = 15 * 60 * 1000,
     max = 100,
     message = errorBody(429, "Too many requests, please try again later."),
     statusCode = 429,
-    keyGenerator = (req: Request) => req.ip || req.connection.remoteAddress || "unknown",
+    keyGenerator = (req: Request) => req.ip ?? req.socket.remoteAddress ?? "unknown",
     skip = () => false,
     headers = true,
     store: customStore,
@@ -151,10 +184,7 @@ function createRateLimiter(options: RateLimitConfig = {}) {
     next();
   }
 
-  // attach store reference so setConfig can call shutdown on removal
-  rateLimitMiddleware._store = store;
-
   return rateLimitMiddleware;
 }
 
-export { createRateLimiter, MemoryStore };
+export { rateLimit, MemoryStore };

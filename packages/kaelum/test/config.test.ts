@@ -1,10 +1,10 @@
 import request from "supertest";
 import { resolveOptions } from "../src/config.js";
-import { createKaelum } from "../src/index.js";
+import { kaelum } from "../src/index.js";
 
 describe("configuration", () => {
   describe("defaults (no options)", () => {
-    const app = createKaelum();
+    const app = kaelum();
     app.route("/echo", { post: (c) => ({ id: c.id ?? null, body: c.body, query: c.query }) });
 
     test("security headers are on", async () => {
@@ -75,17 +75,17 @@ describe("configuration", () => {
 
   describe("security", () => {
     test("helmet can be turned off or configured", async () => {
-      const off = createKaelum({ security: { helmet: false } });
+      const off = kaelum({ security: { helmet: false } });
       off.route("/", { get: () => "x" });
       expect((await request(off.express).get("/")).headers["x-content-type-options"]).toBeUndefined();
 
-      const custom = createKaelum({ security: { helmet: { frameguard: { action: "deny" } } } });
+      const custom = kaelum({ security: { helmet: { frameguard: { action: "deny" } } } });
       custom.route("/", { get: () => "x" });
       expect((await request(custom.express).get("/")).headers["x-frame-options"]).toBe("DENY");
     });
 
     test("cors: true allows any origin", async () => {
-      const app = createKaelum({ security: { cors: true } });
+      const app = kaelum({ security: { cors: true } });
       app.route("/", { get: () => "x" });
 
       const res = await request(app.express).get("/").set("Origin", "https://other.example");
@@ -93,7 +93,7 @@ describe("configuration", () => {
     });
 
     test("cors options restrict the origin and answer preflights", async () => {
-      const app = createKaelum({
+      const app = kaelum({
         security: { cors: { origin: ["https://app.example"], credentials: true, methods: ["GET", "POST"] } },
       });
       app.route("/items", { post: (c) => c.created() });
@@ -114,13 +114,13 @@ describe("configuration", () => {
 
   describe("observability", () => {
     test("request IDs can be turned off or customized", async () => {
-      const off = createKaelum({ observability: { requestId: false } });
+      const off = kaelum({ observability: { requestId: false } });
       off.route("/", { get: (c) => ({ id: c.id ?? null }) });
       const offRes = await request(off.express).get("/");
       expect(offRes.headers["x-request-id"]).toBeUndefined();
       expect(offRes.body.id).toBeNull();
 
-      const custom = createKaelum({
+      const custom = kaelum({
         observability: { requestId: { header: "X-Trace-Id", generate: () => "fixed-id" } },
       });
       custom.route("/", { get: (c) => ({ id: c.id }) });
@@ -131,7 +131,7 @@ describe("configuration", () => {
 
     test("logs write one line per request when enabled", async () => {
       const write = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
-      const app = createKaelum({ observability: { logs: "tiny" } });
+      const app = kaelum({ observability: { logs: "tiny" } });
       app.route("/logged", { get: () => "x" });
 
       await request(app.express).get("/logged");
@@ -154,7 +154,7 @@ describe("configuration", () => {
 
   describe("body", () => {
     test("limit is configurable", async () => {
-      const app = createKaelum({ body: { limit: "1kb" } });
+      const app = kaelum({ body: { limit: "1kb" } });
       app.route("/", { post: (c) => c.body });
 
       expect((await request(app.express).post("/").send({ blob: "x".repeat(2048) })).status).toBe(413);
@@ -162,14 +162,14 @@ describe("configuration", () => {
     });
 
     test("body: false disables parsing", async () => {
-      const app = createKaelum({ body: false });
+      const app = kaelum({ body: false });
       app.route("/", { post: (c) => ({ body: c.body ?? null }) });
 
       expect((await request(app.express).post("/").send({ a: 1 })).body).toEqual({ body: null });
     });
 
     test("parsers can be disabled one by one", async () => {
-      const app = createKaelum({ body: { urlencoded: false } });
+      const app = kaelum({ body: { urlencoded: false } });
       app.route("/", { post: (c) => ({ body: c.body ?? null }) });
 
       expect((await request(app.express).post("/").send({ a: 1 })).body).toEqual({ body: { a: 1 } });
@@ -179,7 +179,7 @@ describe("configuration", () => {
 
   describe("query and trustProxy", () => {
     test('query: "extended" parses nested keys', async () => {
-      const app = createKaelum({ query: "extended" });
+      const app = kaelum({ query: "extended" });
       app.route("/", { get: (c) => c.query });
 
       expect((await request(app.express).get("/?filter[tag]=x&ids[]=1&ids[]=2")).body).toEqual({
@@ -191,12 +191,12 @@ describe("configuration", () => {
     test("trustProxy makes the client address come from X-Forwarded-For", async () => {
       const route = { get: (c: { req: { raw: { ip?: string } } }) => ({ ip: c.req.raw.ip }) };
 
-      const direct = createKaelum();
+      const direct = kaelum();
       direct.route("/", route);
       const untrusted = await request(direct.express).get("/").set("X-Forwarded-For", "203.0.113.9");
       expect(untrusted.body.ip).not.toBe("203.0.113.9");
 
-      const proxied = createKaelum({ trustProxy: true });
+      const proxied = kaelum({ trustProxy: true });
       proxied.route("/", route);
       const trusted = await request(proxied.express).get("/").set("X-Forwarded-For", "203.0.113.9");
       expect(trusted.body.ip).toBe("203.0.113.9");
@@ -205,18 +205,18 @@ describe("configuration", () => {
 
   describe("health", () => {
     test("can be disabled or moved", async () => {
-      const off = createKaelum({ health: false });
+      const off = kaelum({ health: false });
       expect((await request(off.express).get("/health")).status).toBe(404);
       expect(off.routes()).toEqual([]);
 
-      const moved = createKaelum({ health: "/status" });
+      const moved = kaelum({ health: "/status" });
       expect((await request(moved.express).get("/status")).body).toEqual({ status: "ok" });
       expect((await request(moved.express).get("/health")).status).toBe(404);
     });
 
     test("a failing check answers 503 without leaking the reason", async () => {
       let healthy = true;
-      const app = createKaelum({
+      const app = kaelum({
         health: {
           check: async () => {
             if (!healthy) throw new Error("db down at 10.0.0.5");
@@ -233,12 +233,12 @@ describe("configuration", () => {
     });
 
     test("a check returning false answers 503", async () => {
-      const app = createKaelum({ health: { path: "/ready", check: () => false } });
+      const app = kaelum({ health: { path: "/ready", check: () => false } });
       expect((await request(app.express).get("/ready")).status).toBe(503);
     });
 
     test("a user route on the health path is rejected instead of silently shadowed", () => {
-      const app = createKaelum();
+      const app = kaelum();
       expect(() => app.route("/health", { get: () => "mine" })).toThrow(/GET \/health is already registered/);
     });
   });

@@ -1,9 +1,9 @@
-import { createKaelum } from "../src/index.js";
+import { kaelum } from "../src/index.js";
 import { defaultLogSink, type LogEntry } from "../src/logger.js";
 import { testApp } from "../src/testing.js";
 
 describe("kaelum/testing", () => {
-  const app = createKaelum({ shutdown: false });
+  const app = kaelum({ shutdown: false });
   app.route("/echo", {
     get: (c) => ({ query: c.query, header: c.req.header("x-test") }),
     post: (c) => c.created({ got: c.body }),

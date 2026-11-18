@@ -4,291 +4,108 @@
 
 <h1>Kaelum</h1>
 
-<p><strong>Fast, minimalist Node.js framework for web apps & REST APIs</strong></p>
+<p><strong>Express, production-ready by default</strong></p>
 
 [![npm version](https://img.shields.io/npm/v/kaelum?color=blue)](https://www.npmjs.com/package/kaelum)
 [![npm downloads](https://img.shields.io/npm/dm/kaelum?color=green)](https://www.npmjs.com/package/kaelum)
 [![CI](https://github.com/kaelumjs/kaelum/actions/workflows/test.yml/badge.svg)](https://github.com/kaelumjs/kaelum/actions)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-[📚 Documentation](https://kaelumjs.vercel.app) · [🐛 Report Bug](https://github.com/kaelumjs/kaelum/issues/new?template=bug_report.md) · [💡 Request Feature](https://github.com/kaelumjs/kaelum/issues/new?template=feature_request.md)
+[📚 Documentation](https://kaelumjs.matthcodes.dev) · [🐛 Report Bug](https://github.com/kaelumjs/kaelum/issues/new?template=bug_report.md) · [💡 Request Feature](https://github.com/kaelumjs/kaelum/issues/new?template=feature_request.md)
 
 </div>
 
 ---
 
-> [!NOTE]
-> **Kaelum 1.x is in maintenance mode.** It receives bug and security fixes only, on the [`v1`](https://github.com/kaelumjs/kaelum/tree/v1) branch.
-> Kaelum 2.0 is under active development on `main` and will include breaking changes.
-
 ## Why Kaelum?
 
-<table>
-<tr>
-<td width="50%">
+Kaelum is Express with the setup already done. One call gives you security headers, a body size limit, request IDs, request logs, a health check, graceful shutdown and a consistent JSON error format. Routes are declared as a tree, and handlers get a typed `c` context.
 
-**Without Kaelum (raw Express)**
+```ts
+import kaelum, { k } from "kaelum";
 
-```js
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const morgan = require("morgan");
-const path = require("path");
-
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cors());
-app.use(helmet());
-app.use(morgan("dev"));
-app.use(express.static(path.join(__dirname, "public")));
-app.set("view engine", "ejs");
-
-app.get("/users", listUsers);
-app.post("/users", createUser);
-app.get("/users/:id", getUser);
-
-app.listen(3000);
-```
-
-</td>
-<td width="50%">
-
-**With Kaelum** ✨
-
-```js
-const kaelum = require("kaelum");
 const app = kaelum();
 
-app.setConfig({
-  cors: true,
-  helmet: true,
-  logs: "dev",
-  port: 3000,
-});
+const NewUser = k.object({ name: k.string(), email: k.string() });
 
-app.apiRoute("users", {
-  get: listUsers,
-  post: createUser,
-  "/:id": { get: getUser },
-});
+app.route("/users", {
+  get: () => db.users.all(),
 
-app.start();
-```
-
-</td>
-</tr>
-</table>
-
-> **Less boilerplate. Same Express power. Better DX.**
-
----
-
-## ⚡ Quick Start
-
-```bash
-# Scaffold a new project (interactive — picks language + template)
-npx kaelum create my-app
-
-# Or non-interactive with a specific template
-npx kaelum create my-app --template js-web
-npx kaelum create my-api --template js-api
-npx kaelum create my-app --template ts-web
-npx kaelum create my-api --template ts-api
-
-# Run it
-cd my-app && npm install && npm start
-```
-
-> No global install needed — `npx` handles everything.
-
-### Available Templates
-
-| Template | Language   | Description                               |
-| -------- | ---------- | ----------------------------------------- |
-| `js-web` | JavaScript | MVC with views & static files             |
-| `js-api` | JavaScript | REST API ready                            |
-| `ts-web` | TypeScript | MVC with views & static files (tsx + tsc) |
-| `ts-api` | TypeScript | REST API ready (tsx + tsc)                |
-
-> Legacy aliases `web` and `api` map to `js-web` and `js-api`.
-
----
-
-## ✨ Features
-
-| Feature                  | Description                                                    |
-| ------------------------ | -------------------------------------------------------------- |
-| 🚀 **Zero-Config Start**  | JSON parsing, static files, EJS views — all pre-configured     |
-| 🌳 **Tree Routing**       | Recursive nested routes with `addRoute` and `apiRoute`         |
-| 🔒 **Security Built-in**  | One-toggle CORS, Helmet, and XSS protection                    |
-| 🛠️ **CLI Scaffolding**    | `npx kaelum create` with JS and TS templates (web + API)       |
-| 📦 **Dual Module**        | Works with both `require()` and `import`                       |
-| 🏥 **Health Checks**      | Built-in `/health` endpoint with readiness probes              |
-| ⚡ **Middleware Manager** | Track, add, and remove middleware programmatically             |
-| 🔄 **Redirects**          | Declarative redirect maps with single, array, or object syntax |
-| 🛡️ **Error Handler**      | Standardized JSON/HTML error responses with hooks              |
-| ⏱️ **Rate Limiting**      | Built-in zero-dependency in-memory rate limiter                |
-| 🧩 **Plugin System**      | Register and manage plugins with dedup guard                   |
-| 🔌 **Graceful Shutdown**  | Signal handling, connection draining, and cleanup hooks        |
-
----
-
-## 📦 Installation
-
-```bash
-npm install kaelum
-```
-
-```js
-// CommonJS
-const kaelum = require("kaelum");
-const app = kaelum();
-
-// ESM
-import kaelum from "kaelum";
-const app = kaelum();
-```
-
----
-
-## 🧩 API Overview
-
-### `app.setConfig(options)`
-
-```js
-app.setConfig({
-  cors: true,           // enable CORS
-  helmet: true,         // HTTP security headers
-  static: "public",     // serve static files
-  logs: "dev",          // morgan request logging
-  bodyParser: true,     // JSON + urlencoded (default: on)
-  port: 3000,           // preferred port
-  views: { engine: "ejs", path: "./views" },
-  rateLimit: true,      // enable rate limiting (default: 100 req/15 min)
-  gracefulShutdown: { timeout: 10000 }, // signal handling + cleanup
-});
-```
-
-### `app.addRoute(path, handlers)`
-
-```js
-app.addRoute("/dashboard", {
-  get: (req, res) => res.render("dashboard"),
-  post: handleForm,
-  "/settings": {
-    get: showSettings,
-    put: updateSettings,
+  post: {
+    body: NewUser,
+    handler: (c) => c.created(db.users.create(c.body)), // c.body is { name: string; email: string }
   },
-});
-```
 
-### `app.apiRoute(resource, handlers)`
-
-```js
-app.apiRoute("products", {
-  get: listAll,
-  post: create,
   "/:id": {
-    get: getById,
-    put: update,
-    delete: remove,
-    "/reviews": {
-      get: getReviews,   // GET /products/:id/reviews
-      post: addReview,
-    },
+    use: [auth],
+    get: (c) => db.users.find(c.params.id),             // c.params.id is a string
+    delete: (c) => c.noContent(),
   },
 });
+
+await app.start(3000);
 ```
 
-### Other Helpers
+- **Production defaults**: Helmet, body limit, request IDs, logs, `GET /health` and graceful shutdown are on. CORS, rate limiting, CSRF and IP restriction are one option away.
+- **Typed route trees**: path params, body, query and the handler's `c` are inferred. No generics to write.
+- **Validation from any schema**: Zod, Valibot, ArkType or the built-in `k` builder, through Standard Schema. Invalid input answers 400 with every issue listed.
+- **Still Express**: any Express middleware works with `app.use()`, and `app.handler` mounts a Kaelum app inside an existing Express app.
 
-```js
-app.start(3000);                              // start server
-app.setMiddleware("/admin", authMiddleware);   // scoped middleware
-app.redirect("/old", "/new", 301);            // redirects
-app.healthCheck("/health");                    // health endpoint
-app.useErrorHandler({ exposeStack: false });   // error handling
-app.plugin(myPlugin, { key: "value" });        // register plugin
-app.onShutdown(() => cleanup());               // shutdown hook
-app.close();                                   // graceful close
-```
-
-### CLI Commands
+## Install
 
 ```bash
-kaelum create              # interactive project scaffolding
-kaelum --version           # show installed version
-kaelum info                # show environment details
-kaelum help                # show all commands
+npm install kaelum@next
 ```
 
----
+Requires Node.js 24.22.1 or later. Kaelum is ESM; `require("kaelum")` works too, through Node's `require(esm)`.
 
-## 📁 Project Templates
+## A quick tour
 
-### JavaScript Web (`js-web`)
+```ts
+import kaelum, { rateLimit } from "kaelum";
 
-```
-my-web-app/
-├── public/            # Static assets
-├── views/             # HTML templates
-├── controllers/       # Route logic (MVC)
-├── middlewares/        # Custom middleware
-├── routes.js          # Route definitions
-├── app.js             # Entry point
-└── package.json
-```
+const app = kaelum({
+  security: { cors: { origin: "https://app.example" } },
+  trustProxy: true,
+});
 
-### JavaScript API (`js-api`)
+// CRUD by convention: GET/POST /posts, GET/PATCH/PUT/DELETE /posts/:id
+app.resource("/posts", {
+  list: () => db.posts.all(),
+  get: (c) => db.posts.find(c.params.id),
+  remove: (c) => c.noContent(),
+});
 
-```
-my-api/
-├── controllers/       # Business logic
-├── middlewares/        # Auth, validation
-├── routes.js          # API routes
-├── app.js             # Entry point
-└── package.json
-```
+// A single route, with its own middleware
+app.post("/login", { use: [rateLimit({ max: 5 })], handler: login });
 
-### TypeScript Web (`ts-web`)
+// Errors become { error: { code, message } }
+app.get("/teapot", (c) => c.error(418, "I'm a teapot"));
 
-```
-my-web-app/
-├── public/            # Static assets
-├── views/             # HTML templates
-├── src/
-│   ├── controllers/   # Route logic (MVC)
-│   ├── middlewares/    # Custom middleware
-│   ├── routes.ts      # Route definitions
-│   └── app.ts         # Entry point
-├── tsconfig.json
-└── package.json
+// Logs carry the request ID
+app.get("/hello", (c) => {
+  c.log.info("saying hello");
+  return "hello";
+});
+
+// Runs on SIGTERM/SIGINT, after open requests finish
+app.onClose(() => db.close());
 ```
 
-### TypeScript API (`ts-api`)
+Testing, without starting the server:
 
-```
-my-api/
-├── src/
-│   ├── controllers/   # Business logic
-│   ├── middlewares/    # Auth, validation
-│   ├── routes.ts      # API routes
-│   └── app.ts         # Entry point
-├── tsconfig.json
-└── package.json
+```ts
+import { testApp } from "kaelum/testing";
+
+const client = testApp(app);
+const res = await client.post("/users", { name: "Ada", email: "ada@example.com" });
+expect(res.status).toBe(201);
+await client.close();
 ```
 
----
+## Status
 
-## 🧪 Testing
-
-```bash
-npm test        # run all tests
-npm run lint    # check code with ESLint
-npm run format  # format code with Prettier
-```
+Kaelum 2.0 is in alpha: the API may still change between alphas. Version 1.x, with the `app.setConfig` / `app.addRoute` API, is in maintenance on the [`v1`](https://github.com/kaelumjs/kaelum/tree/v1) branch.
 
 ---
 
@@ -305,7 +122,7 @@ See also: [Code of Conduct](https://github.com/kaelumjs/.github/blob/main/CODE_O
 | Package                                                 | Description                |
 | ------------------------------------------------------- | -------------------------- |
 | [kaelum](https://www.npmjs.com/package/kaelum)          | Core framework             |
-| [kaelumjs/docs](https://github.com/kaelumjs/docs)       | Documentation site         |
+| [create-kaelum](https://www.npmjs.com/package/create-kaelum) | Project scaffolding    |
 | [kaelumjs/.github](https://github.com/kaelumjs/.github) | Shared community standards |
 
 ---

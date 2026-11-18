@@ -1,9 +1,9 @@
 // Type-level tests for endpoint schemas. Checked by `pnpm typecheck`, never run.
 import { expectTypeOf } from "vitest";
 import { z } from "zod";
-import { createKaelum, type Middleware, type StandardSchemaV1 } from "../../src/index.js";
+import { kaelum, type Middleware, type StandardSchemaV1 } from "../../src/index.js";
 
-const app = createKaelum();
+const app = kaelum();
 declare const auth: Middleware;
 
 const User = z.object({ name: z.string(), role: z.enum(["admin", "user"]).default("user") });

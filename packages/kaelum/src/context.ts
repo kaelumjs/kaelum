@@ -4,6 +4,16 @@ import { createLogger, defaultLogSink, type LogSink, type Logger } from "./logge
 import type { ParamsOf } from "./routing/types.js";
 import type { ValidatedInput } from "./schema/validate.js";
 
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace -- augmenting Express's global types requires it
+  namespace Express {
+    interface Request {
+      /** The request ID, set when request IDs are enabled. Also `c.id`. */
+      id?: string;
+    }
+  }
+}
+
 declare const responded: unique symbol;
 
 /**

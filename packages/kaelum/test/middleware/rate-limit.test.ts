@@ -1,38 +1,44 @@
-// test/core/rateLimit.test.js
-import { createRateLimiter, MemoryStore } from "../../src/core/rateLimit.js";
+import type { Request, Response } from "express";
+import { MemoryStore, rateLimit } from "../../src/middleware/rate-limit.js";
 
 // ── Helpers ──────────────────────────────────────────────────────
 
-function mockReq(overrides = {}) {
-  return { ip: "127.0.0.1", connection: { remoteAddress: "127.0.0.1" }, ...overrides };
+function mockReq(overrides: Record<string, unknown> = {}): Request {
+  return { ip: "127.0.0.1", socket: { remoteAddress: "127.0.0.1" }, ...overrides } as unknown as Request;
 }
 
-function mockRes() {
-  const headers = {};
+interface MockResponse extends Response {
+  _status: number | null;
+  _json: unknown;
+  _headers: Record<string, string>;
+}
+
+function mockRes(): MockResponse {
+  const headers: Record<string, string> = {};
   const res = {
-    _status: null,
-    _json: null,
+    _status: null as number | null,
+    _json: null as unknown,
     _headers: headers,
-    setHeader(name, value) {
+    setHeader(name: string, value: string) {
       headers[name] = value;
     },
-    status(code) {
+    status(code: number) {
       res._status = code;
       return res;
     },
-    json(body) {
+    json(body: unknown) {
       res._json = body;
       return res;
     },
   };
-  return res;
+  return res as unknown as MockResponse;
 }
 
 // ── MemoryStore unit tests ───────────────────────────────────────
 
 describe("MemoryStore", () => {
-  let store;
-  afterEach(() => store && store.shutdown());
+  let store: MemoryStore | undefined;
+  afterEach(() => store?.shutdown());
 
   test("increment tracks hits and returns correct counts", () => {
     store = new MemoryStore(10000);
@@ -64,9 +70,9 @@ describe("MemoryStore", () => {
 
 // ── Middleware behaviour ─────────────────────────────────────────
 
-describe("createRateLimiter middleware", () => {
+describe("rateLimit middleware", () => {
   test("allows requests within the limit", () => {
-    const mw = createRateLimiter({ max: 3, windowMs: 10000 });
+    const mw = rateLimit({ max: 3, windowMs: 10000 });
     const req = mockReq();
     const res = mockRes();
     let nextCalled = false;
@@ -75,11 +81,10 @@ describe("createRateLimiter middleware", () => {
 
     expect(nextCalled).toBe(true);
     expect(res._status).toBeNull(); // no 429
-    mw._store.shutdown();
   });
 
   test("returns 429 when limit exceeded", () => {
-    const mw = createRateLimiter({ max: 2, windowMs: 10000 });
+    const mw = rateLimit({ max: 2, windowMs: 10000 });
     const req = mockReq();
 
     // exhaust the limit
@@ -96,11 +101,10 @@ describe("createRateLimiter middleware", () => {
     expect(res._json).toEqual({
       error: { code: "TOO_MANY_REQUESTS", message: "Too many requests, please try again later." },
     });
-    mw._store.shutdown();
   });
 
   test("uses custom message and statusCode", () => {
-    const mw = createRateLimiter({
+    const mw = rateLimit({
       max: 1,
       windowMs: 10000,
       message: "Calm down!",
@@ -114,14 +118,13 @@ describe("createRateLimiter middleware", () => {
 
     expect(res._status).toBe(503);
     expect(res._json).toEqual({ error: { code: "SERVICE_UNAVAILABLE", message: "Calm down!" } });
-    mw._store.shutdown();
   });
 
   test("supports custom keyGenerator", () => {
-    const mw = createRateLimiter({
+    const mw = rateLimit({
       max: 1,
       windowMs: 10000,
-      keyGenerator: (req) => req.headers["x-api-key"] || "anon",
+      keyGenerator: (req) => String(req.headers["x-api-key"] ?? "anon"),
     });
 
     const reqA = mockReq({ headers: { "x-api-key": "aaa" } });
@@ -138,11 +141,10 @@ describe("createRateLimiter middleware", () => {
     let nextB = false;
     mw(reqB, resB, () => { nextB = true; });
     expect(nextB).toBe(true);
-    mw._store.shutdown();
   });
 
   test("skip function bypasses rate limiting", () => {
-    const mw = createRateLimiter({
+    const mw = rateLimit({
       max: 1,
       windowMs: 10000,
       skip: (req) => req.path === "/health",
@@ -157,11 +159,10 @@ describe("createRateLimiter middleware", () => {
     let nextCalled = false;
     mw(req, res, () => { nextCalled = true; });
     expect(nextCalled).toBe(true);
-    mw._store.shutdown();
   });
 
   test("sends standard RateLimit-* headers by default", () => {
-    const mw = createRateLimiter({ max: 5, windowMs: 10000 });
+    const mw = rateLimit({ max: 5, windowMs: 10000 });
     const req = mockReq();
     const res = mockRes();
     mw(req, res, () => {});
@@ -169,11 +170,10 @@ describe("createRateLimiter middleware", () => {
     expect(res._headers["RateLimit-Limit"]).toBe("5");
     expect(res._headers["RateLimit-Remaining"]).toBe("4");
     expect(res._headers["RateLimit-Reset"]).toBeDefined();
-    mw._store.shutdown();
   });
 
   test("sends Retry-After header on 429", () => {
-    const mw = createRateLimiter({ max: 1, windowMs: 60000 });
+    const mw = rateLimit({ max: 1, windowMs: 60000 });
     const req = mockReq();
     mw(req, mockRes(), () => {});
 
@@ -183,40 +183,36 @@ describe("createRateLimiter middleware", () => {
     expect(res._status).toBe(429);
     expect(res._headers["Retry-After"]).toBeDefined();
     expect(Number(res._headers["Retry-After"])).toBeGreaterThan(0);
-    mw._store.shutdown();
   });
 
   test("does not send headers when headers option is false", () => {
-    const mw = createRateLimiter({ max: 5, windowMs: 10000, headers: false });
+    const mw = rateLimit({ max: 5, windowMs: 10000, headers: false });
     const req = mockReq();
     const res = mockRes();
     mw(req, res, () => {});
 
     expect(res._headers["RateLimit-Limit"]).toBeUndefined();
     expect(res._headers["RateLimit-Remaining"]).toBeUndefined();
-    mw._store.shutdown();
   });
 
   test("attaches rateLimit info to req object", () => {
-    const mw = createRateLimiter({ max: 10, windowMs: 10000 });
+    const mw = rateLimit({ max: 10, windowMs: 10000 });
     const req = mockReq();
     mw(req, mockRes(), () => {});
 
     expect(req.rateLimit).toBeDefined();
-    expect(req.rateLimit.limit).toBe(10);
-    expect(req.rateLimit.remaining).toBe(9);
-    expect(req.rateLimit.resetTime).toBeGreaterThan(Date.now() - 1000);
-    mw._store.shutdown();
+    expect(req.rateLimit?.limit).toBe(10);
+    expect(req.rateLimit?.remaining).toBe(9);
+    expect(req.rateLimit?.resetTime).toBeGreaterThan(Date.now() - 1000);
   });
 
   test("default options work correctly (max: 100, windowMs: 15m)", () => {
-    const mw = createRateLimiter();
+    const mw = rateLimit();
     const req = mockReq();
     const res = mockRes();
     mw(req, res, () => {});
 
-    expect(req.rateLimit.limit).toBe(100);
-    expect(req.rateLimit.remaining).toBe(99);
-    mw._store.shutdown();
+    expect(req.rateLimit?.limit).toBe(100);
+    expect(req.rateLimit?.remaining).toBe(99);
   });
 });

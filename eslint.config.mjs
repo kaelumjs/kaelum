@@ -22,12 +22,7 @@ export default tseslint.config(
       "no-console": "off",
       "prefer-const": "warn",
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_|next" }],
-      // The 1.x internals lean on `any`; tightened as modules are rewritten for 2.0.
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/ban-ts-comment": [
-        "error",
-        { "ts-nocheck": "allow-with-description", "ts-expect-error": "allow-with-description" },
-      ],
+      "@typescript-eslint/ban-ts-comment": ["error", { "ts-expect-error": "allow-with-description" }],
     },
   },
   {

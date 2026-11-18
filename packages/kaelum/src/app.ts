@@ -3,14 +3,14 @@ import cors from "cors";
 import express, { type Express, type NextFunction, type Request, type Response, type Router } from "express";
 import helmet from "helmet";
 import { resolveOptions, type KaelumOptions, type ResolvedOptions } from "./config.js";
-import { doubleSubmit, originCheck } from "./core/csrf.js";
-import { ipRestriction } from "./core/ipRestriction.js";
-import { createRateLimiter } from "./core/rateLimit.js";
-import { createRequestLogger } from "./core/requestLogger.js";
-import { serverTiming } from "./core/timing.js";
 import { HttpError, errorBody } from "./http-error.js";
 import { createLogger, type LogSink, type Logger } from "./logger.js";
+import { doubleSubmit, originCheck } from "./middleware/csrf.js";
+import { ipRestriction } from "./middleware/ip-restriction.js";
+import { rateLimit } from "./middleware/rate-limit.js";
 import { requestId } from "./middleware/request-id.js";
+import { createRequestLogger } from "./middleware/request-logger.js";
+import { serverTiming } from "./middleware/timing.js";
 import { RouteTable } from "./routing/table.js";
 import { flattenTree } from "./routing/tree.js";
 import type {
@@ -337,7 +337,7 @@ function defined(object: Record<string, unknown>): Record<string, unknown> {
  * defaults: security headers, a body size limit, request IDs, request logs
  * and `GET /health`.
  */
-export function createKaelum(options?: KaelumOptions): Kaelum {
+export function kaelum(options?: KaelumOptions): Kaelum {
   return new Kaelum(options);
 }
 
@@ -354,7 +354,7 @@ function builtInMiddleware(config: ResolvedOptions): Middleware[] {
 
   // Cheap rejections come before the body is read.
   if (config.ipRestriction) stack.push(ipRestriction(config.ipRestriction));
-  if (config.rateLimit) stack.push(createRateLimiter(config.rateLimit));
+  if (config.rateLimit) stack.push(rateLimit(config.rateLimit));
   if (config.csrf) {
     const { strategy = "origin", ...csrfOptions } = config.csrf;
     stack.push(strategy === "token" ? doubleSubmit(csrfOptions) : originCheck(csrfOptions));
