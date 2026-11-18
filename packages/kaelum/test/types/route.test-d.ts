@@ -1,9 +1,9 @@
 // Type-level tests for the route tree. Checked by `pnpm typecheck`, never run.
 // Every `@ts-expect-error` below is a mistake that must stay a compile error.
 import { expectTypeOf } from "vitest";
-import { createKaelum, defineRoutes, type Context, type Middleware, type ParamsOf } from "../../src/index.js";
+import { kaelum, defineRoutes, type Context, type Middleware, type ParamsOf } from "../../src/index.js";
 
-const app = createKaelum();
+const app = kaelum();
 declare const auth: Middleware;
 
 // --- ParamsOf ---------------------------------------------------------------

@@ -1,6 +1,6 @@
 // Type-level tests for the `k` schema builder. Checked by `pnpm typecheck`, never run.
 import { expectTypeOf } from "vitest";
-import { createKaelum, k, type Infer, type InferOutput } from "../../src/index.js";
+import { kaelum, k, type Infer, type InferOutput } from "../../src/index.js";
 
 // --- primitives and modifiers -------------------------------------------------
 expectTypeOf<Infer<ReturnType<typeof k.string>>>().toEqualTypeOf<string>();
@@ -42,7 +42,7 @@ expectTypeOf<Infer<typeof User>>().toEqualTypeOf<{
 expectTypeOf<InferOutput<typeof User>>().toEqualTypeOf<Infer<typeof User>>();
 
 // --- in a route, the same as any other Standard Schema ------------------------
-const app = createKaelum();
+const app = kaelum();
 
 app.route("/users/:id", {
   put: {

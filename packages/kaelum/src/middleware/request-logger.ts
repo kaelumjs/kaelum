@@ -1,4 +1,3 @@
-// core/requestLogger.ts
 // Minimal request logger: one line per response, written when it finishes.
 //
 //   GET /users 200 1.997 ms - 76

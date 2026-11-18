@@ -1,12 +1,10 @@
 import type { HelmetOptions } from "helmet";
-import type { RequestLogFormat } from "./core/requestLogger.js";
+import type { CsrfOptions } from "./middleware/csrf.js";
+import type { IpRestrictionOptions } from "./middleware/ip-restriction.js";
+import type { RateLimitOptions } from "./middleware/rate-limit.js";
+import type { RequestLogFormat } from "./middleware/request-logger.js";
+import type { TimingOptions } from "./middleware/timing.js";
 import { defaultLogSink, type LogSink } from "./logger.js";
-import type { CsrfOptions, IpRestrictionOptions, RateLimitConfig, TimingOptions } from "./types.js";
-
-export type { IpRestrictionOptions, TimingOptions };
-
-/** Rate limiting options. */
-export type RateLimitOptions = RateLimitConfig;
 
 /** CSRF protection options. */
 export interface CsrfConfig extends CsrfOptions {

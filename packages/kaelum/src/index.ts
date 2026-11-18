@@ -1,19 +1,8 @@
-import createApp from "./createApp.js";
-import type { KaelumApp } from "./types.js";
-
-/** Create a Kaelum app: an Express app with Kaelum helpers attached. */
-const kaelum = createApp as () => KaelumApp;
+import { kaelum } from "./app.js";
 
 export default kaelum;
 
-// Lets CommonJS callers keep writing `require("kaelum")()`.
-export { kaelum as "module.exports" };
-
-export type * from "./types.js";
-
-// --- 2.0 API (in progress) --------------------------------------------------
-// Lives next to the 1.x factory above until it replaces it as the default export.
-export { Kaelum, createKaelum, defineRoutes } from "./app.js";
+export { Kaelum, defineRoutes, kaelum } from "./app.js";
 export type { CloseHook, Plugin } from "./app.js";
 export type {
   BodyOptions,
@@ -21,18 +10,23 @@ export type {
   CsrfConfig,
   HealthOptions,
   KaelumOptions,
-  RateLimitOptions,
   RequestIdOptions,
   ShutdownOptions,
 } from "./config.js";
-export type { LogEntry, LogLevel, LogSink, Logger } from "./logger.js";
-// Middleware factories, for `app.use()` or a single route's `use`.
-export { createRateLimiter as rateLimit } from "./core/rateLimit.js";
-export { ipRestriction } from "./core/ipRestriction.js";
 export { Context } from "./context.js";
 export type { ContextRequest, ContextResponse, Responded } from "./context.js";
 export { HttpError } from "./http-error.js";
 export type { ErrorBody, HttpErrorOptions } from "./http-error.js";
+export type { LogEntry, LogLevel, LogSink, Logger } from "./logger.js";
+
+// Middleware factories, for `app.use()` or a single route's `use`.
+export { ipRestriction } from "./middleware/ip-restriction.js";
+export type { IpRestrictionOptions } from "./middleware/ip-restriction.js";
+export { rateLimit } from "./middleware/rate-limit.js";
+export type { RateLimitOptions, RateLimitStore } from "./middleware/rate-limit.js";
+export type { CsrfOptions } from "./middleware/csrf.js";
+export type { TimingOptions } from "./middleware/timing.js";
+
 export { k } from "./schema/k.js";
 export type { Infer, KSchema } from "./schema/k.js";
 export type { InferOutput, StandardSchemaV1 } from "./schema/standard.js";

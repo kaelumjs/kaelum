@@ -1,10 +1,10 @@
 import request from "supertest";
-import { createKaelum, ipRestriction, rateLimit } from "../src/index.js";
+import { kaelum, ipRestriction, rateLimit } from "../src/index.js";
 
 describe("security and timing options", () => {
   describe("rate limit", () => {
     test("off by default", async () => {
-      const app = createKaelum();
+      const app = kaelum();
       app.route("/", { get: () => "x" });
 
       const res = await request(app.express).get("/");
@@ -12,7 +12,7 @@ describe("security and timing options", () => {
     });
 
     test("limits the whole app and answers 429 in the standard error shape", async () => {
-      const app = createKaelum({ security: { rateLimit: { max: 2, windowMs: 60_000 } } });
+      const app = kaelum({ security: { rateLimit: { max: 2, windowMs: 60_000 } } });
       app.route("/a", { get: () => "a" });
       app.route("/b", { get: () => "b" });
 
@@ -32,7 +32,7 @@ describe("security and timing options", () => {
     });
 
     test("is checked before the body is parsed", async () => {
-      const app = createKaelum({ security: { rateLimit: { max: 1 } } });
+      const app = kaelum({ security: { rateLimit: { max: 1 } } });
       app.route("/", { post: (c) => c.body });
 
       await request(app.express).post("/").send({ ok: true });
@@ -43,7 +43,7 @@ describe("security and timing options", () => {
     });
 
     test("rateLimit() protects a single route through `use`", async () => {
-      const app = createKaelum();
+      const app = kaelum();
       app.route("/login", { post: { use: [rateLimit({ max: 1 })], handler: (c) => c.ok({ in: true }) } });
       app.route("/open", { get: () => "x" });
 
@@ -55,14 +55,14 @@ describe("security and timing options", () => {
 
   describe("CSRF", () => {
     test("off by default", async () => {
-      const app = createKaelum();
+      const app = kaelum();
       app.route("/", { post: (c) => c.created() });
 
       expect((await request(app.express).post("/")).status).toBe(201);
     });
 
     test("csrf: true checks the origin of state-changing requests", async () => {
-      const app = createKaelum({ security: { csrf: { origin: "https://app.example" } } });
+      const app = kaelum({ security: { csrf: { origin: "https://app.example" } } });
       app.route("/items", { get: () => [], post: (c) => c.created() });
 
       expect((await request(app.express).get("/items")).status).toBe(200);
@@ -76,7 +76,7 @@ describe("security and timing options", () => {
     });
 
     test('strategy: "token" requires the cookie value in the header', async () => {
-      const app = createKaelum({ security: { csrf: { strategy: "token" } } });
+      const app = kaelum({ security: { csrf: { strategy: "token" } } });
       app.route("/items", { get: () => [], post: (c) => c.created() });
 
       const first = await request(app.express).get("/items");
@@ -94,7 +94,7 @@ describe("security and timing options", () => {
     });
 
     test("excluded paths are not checked", async () => {
-      const app = createKaelum({ security: { csrf: { origin: "https://app.example", exclude: ["/webhooks/*"] } } });
+      const app = kaelum({ security: { csrf: { origin: "https://app.example", exclude: ["/webhooks/*"] } } });
       app.route("/webhooks/stripe", { post: (c) => c.noContent() });
 
       expect((await request(app.express).post("/webhooks/stripe")).status).toBe(204);
@@ -103,7 +103,7 @@ describe("security and timing options", () => {
 
   describe("IP restriction", () => {
     test("deny blocks, with the standard error shape", async () => {
-      const app = createKaelum({ security: { ipRestriction: { deny: ["0.0.0.0/0"] } } });
+      const app = kaelum({ security: { ipRestriction: { deny: ["0.0.0.0/0"] } } });
       app.route("/", { get: () => "x" });
 
       const res = await request(app.express).get("/");
@@ -112,7 +112,7 @@ describe("security and timing options", () => {
     });
 
     test("allow wins over deny", async () => {
-      const app = createKaelum({
+      const app = kaelum({
         security: { ipRestriction: { allow: ["127.0.0.1", "::ffff:127.0.0.1", "::1"], deny: ["0.0.0.0/0"] } },
       });
       app.route("/", { get: () => "x" });
@@ -121,7 +121,7 @@ describe("security and timing options", () => {
     });
 
     test("ipRestriction() protects a single subtree through `use`", async () => {
-      const app = createKaelum();
+      const app = kaelum();
       app.route("/admin", { use: [ipRestriction({ deny: ["0.0.0.0/0"] })], get: () => "secret" });
       app.route("/public", { get: () => "x" });
 
@@ -130,24 +130,24 @@ describe("security and timing options", () => {
     });
 
     test("blocked clients are rejected before the health check too", async () => {
-      const app = createKaelum({ security: { ipRestriction: { deny: ["0.0.0.0/0"] } } });
+      const app = kaelum({ security: { ipRestriction: { deny: ["0.0.0.0/0"] } } });
       expect((await request(app.express).get("/health")).status).toBe(403);
     });
   });
 
   describe("timing", () => {
     test("off by default, Server-Timing header when enabled", async () => {
-      const off = createKaelum();
+      const off = kaelum();
       off.route("/", { get: () => "x" });
       expect((await request(off.express).get("/")).headers["server-timing"]).toBeUndefined();
 
-      const on = createKaelum({ observability: { timing: true } });
+      const on = kaelum({ observability: { timing: true } });
       on.route("/", { get: () => "x" });
       expect((await request(on.express).get("/")).headers["server-timing"]).toMatch(/^total;dur=\d+\.\d{2}$/);
     });
 
     test("header name and precision are configurable", async () => {
-      const app = createKaelum({ observability: { timing: { headerName: "X-Time", precision: 0 } } });
+      const app = kaelum({ observability: { timing: { headerName: "X-Time", precision: 0 } } });
       app.route("/", { get: () => "x" });
 
       expect((await request(app.express).get("/")).headers["x-time"]).toMatch(/^total;dur=\d+$/);

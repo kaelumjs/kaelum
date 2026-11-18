@@ -1,5 +1,5 @@
 import request from "supertest";
-import { createKaelum, k, type StandardSchemaV1 } from "../src/index.js";
+import { kaelum, k, type StandardSchemaV1 } from "../src/index.js";
 
 type AnySchema = StandardSchemaV1;
 
@@ -216,7 +216,7 @@ describe("k schema builder", () => {
 
   describe("in a route", () => {
     test("validates body and query, and c gets the parsed values", async () => {
-      const app = createKaelum();
+      const app = kaelum();
       app.route("/users", {
         get: {
           query: k.object({ page: k.coerce.number().int().min(1).default(1), active: k.coerce.boolean().optional() }),

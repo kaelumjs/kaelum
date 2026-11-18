@@ -1,12 +1,12 @@
 import express from "express";
 import request from "supertest";
-import { createKaelum, defineRoutes, HttpError, Kaelum } from "../src/index.js";
+import { kaelum, defineRoutes, HttpError, Kaelum } from "../src/index.js";
 
 describe("Kaelum app", () => {
   let app: Kaelum;
 
   beforeEach(() => {
-    app = createKaelum({ health: false });
+    app = kaelum({ health: false });
   });
 
   describe("route tree", () => {

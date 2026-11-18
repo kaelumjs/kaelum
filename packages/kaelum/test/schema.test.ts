@@ -1,7 +1,7 @@
 import type { RequestHandler } from "express";
 import request from "supertest";
 import { z } from "zod";
-import { createKaelum, type Kaelum, type StandardSchemaV1 } from "../src/index.js";
+import { kaelum, type Kaelum, type StandardSchemaV1 } from "../src/index.js";
 
 /** A hand-written Standard Schema, to test the contract without any library. */
 function schema<T>(check: (value: unknown) => T | { issues: StandardSchemaV1.Issue[] }): StandardSchemaV1<unknown, T> {
@@ -23,7 +23,7 @@ describe("endpoint schemas", () => {
   let app: Kaelum;
 
   beforeEach(() => {
-    app = createKaelum();
+    app = kaelum();
   });
 
   describe("with Zod", () => {

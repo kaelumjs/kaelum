@@ -1,13 +1,14 @@
-import createApp from "../../src/createApp.js";
-import { originCheck, doubleSubmit } from "../../src/core/csrf.js";
+import express, { type Request } from "express";
 import request from "supertest";
+import { doubleSubmit, originCheck } from "../../src/middleware/csrf.js";
+import type { CsrfOptions } from "../../src/middleware/csrf.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeOriginApp(opts) {
-  const app = createApp();
+function makeOriginApp(opts?: CsrfOptions) {
+  const app = express();
   app.use(originCheck(opts));
   app.post("/test", (req, res) => res.json({ ok: true }));
   app.put("/test", (req, res) => res.json({ ok: true }));
@@ -15,10 +16,10 @@ function makeOriginApp(opts) {
   return app;
 }
 
-function makeDoubleApp(opts) {
-  const app = createApp();
+function makeDoubleApp(opts?: CsrfOptions) {
+  const app = express();
   app.use(doubleSubmit(opts));
-  app.get("/csrf-token", (req, res) => res.json({ token: req._csrfToken }));
+  app.get("/csrf-token", (req, res) => res.json({ token: (req as Request & { _csrfToken?: string })._csrfToken }));
   app.post("/test", (req, res) => res.json({ ok: true }));
   app.get("/test", (req, res) => res.json({ ok: true }));
   return app;
@@ -28,7 +29,7 @@ function makeDoubleApp(opts) {
 // Mode 1: Origin Check
 // ---------------------------------------------------------------------------
 
-describe("core/csrf — originCheck", () => {
+describe("csrf — originCheck", () => {
   describe("safe methods always pass", () => {
     const app = makeOriginApp({ origin: "https://myapp.com" });
 
@@ -117,7 +118,7 @@ describe("core/csrf — originCheck", () => {
     });
 
     it("POST on non-excluded path still blocked", async () => {
-      const app = createApp();
+      const app = express();
       app.use(originCheck({ origin: "https://myapp.com", exclude: ["/other"] }));
       app.post("/test", (req, res) => res.json({ ok: true }));
       const res = await request(app).post("/test").send({});
@@ -125,7 +126,7 @@ describe("core/csrf — originCheck", () => {
     });
 
     it("wildcard exclude (/api/*) excludes sub-paths", async () => {
-      const app = createApp();
+      const app = express();
       app.use(originCheck({ origin: "https://myapp.com", exclude: ["/api/*"] }));
       app.post("/api/webhooks", (req, res) => res.json({ ok: true }));
       app.post("/other", (req, res) => res.json({ ok: true }));
@@ -138,32 +139,13 @@ describe("core/csrf — originCheck", () => {
     });
   });
 
-  describe("setConfig integration", () => {
-    it("setConfig({ csrf: true }) installs originCheck middleware", async () => {
-      const app = createApp();
-      app.setConfig({ csrf: { origin: "https://trusted.com" } });
-      app.post("/test", (req, res) => res.json({ ok: true }));
-
-      const fail = await request(app)
-        .post("/test")
-        .set("Origin", "https://evil.com")
-        .send({});
-      expect(fail.status).toBe(403);
-
-      const ok = await request(app)
-        .post("/test")
-        .set("Origin", "https://trusted.com")
-        .send({});
-      expect(ok.status).toBe(200);
-    });
-  });
 });
 
 // ---------------------------------------------------------------------------
 // Mode 2: Double Submit Cookie
 // ---------------------------------------------------------------------------
 
-describe("core/csrf — doubleSubmit", () => {
+describe("csrf — doubleSubmit", () => {
   describe("token generation", () => {
     it("GET sets csrf-token cookie on the response", async () => {
       const app = makeDoubleApp();
@@ -171,7 +153,7 @@ describe("core/csrf — doubleSubmit", () => {
       expect(res.status).toBe(200);
       const setCookie = res.headers["set-cookie"];
       expect(setCookie).toBeDefined();
-      expect(setCookie.some((c) => c.startsWith("csrf-token="))).toBe(true);
+      expect([setCookie].flat().some((c) => String(c).startsWith("csrf-token="))).toBe(true);
     });
   });
 
@@ -214,11 +196,4 @@ describe("core/csrf — doubleSubmit", () => {
     });
   });
 
-  describe("useCsrf chaining", () => {
-    it("app.useCsrf() returns app for chaining", () => {
-      const app = createApp();
-      const result = app.useCsrf();
-      expect(result).toBe(app);
-    });
-  });
 });

@@ -5,50 +5,43 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 
-test("ESM: default export is the app factory", async () => {
-  const { default: kaelum } = await import("kaelum");
-  assert.equal(typeof kaelum, "function");
+test("ESM: default export and named `kaelum` create an app", async () => {
+  const mod = await import("kaelum");
+  assert.equal(mod.default, mod.kaelum);
 
-  const app = kaelum();
-  assert.equal(typeof app.setConfig, "function");
-  assert.equal(typeof app.addRoute, "function");
+  const app = mod.default({ health: false, shutdown: false });
+  assert.ok(app instanceof mod.Kaelum);
 });
 
-test("CommonJS: require('kaelum') returns the app factory", () => {
-  const kaelum = require("kaelum");
-  assert.equal(typeof kaelum, "function");
-
-  const app = kaelum();
-  assert.equal(typeof app.setConfig, "function");
-  assert.equal(typeof app.addRoute, "function");
+test("CommonJS: require('kaelum') gives the named exports", () => {
+  const { kaelum, Kaelum } = require("kaelum");
+  assert.ok(kaelum({ health: false, shutdown: false }) instanceof Kaelum);
 });
 
-test("subpaths: kaelum/validate and kaelum/test", async () => {
-  const { validate } = await import("kaelum/validate");
-  assert.equal(typeof validate, "function");
-  assert.equal(typeof require("kaelum/validate").validate, "function");
-
-  const { testApp } = await import("kaelum/test");
-  assert.equal(typeof testApp, "function");
+test("the 1.x subpaths are gone", async () => {
+  await assert.rejects(import("kaelum/validate"), { code: "ERR_PACKAGE_PATH_NOT_EXPORTED" });
+  await assert.rejects(import("kaelum/test"), { code: "ERR_PACKAGE_PATH_NOT_EXPORTED" });
 });
 
-test("ESM: the 2.0 API is exported by name", async () => {
-  const { createKaelum, defineRoutes, HttpError, Kaelum, Context } = await import("kaelum");
+test("named exports", async () => {
+  const { kaelum, defineRoutes, HttpError, Context, k, rateLimit, ipRestriction } = await import("kaelum");
 
-  const app = createKaelum({ health: false });
-  assert.ok(app instanceof Kaelum);
   assert.equal(typeof Context, "function");
   assert.equal(new HttpError(404).status, 404);
+  assert.equal(typeof k.string, "function");
+  assert.equal(typeof rateLimit(), "function");
+  assert.equal(typeof ipRestriction(), "function");
 
+  const app = kaelum({ health: false, shutdown: false });
   app.route(defineRoutes("/ping")({ get: () => "pong" }));
   assert.deepEqual(app.routes(), [{ method: "GET", path: "/ping" }]);
 });
 
-test("subpath: kaelum/testing drives a 2.0 app", async () => {
-  const { createKaelum } = await import("kaelum");
+test("subpath: kaelum/testing drives an app", async () => {
+  const { kaelum } = await import("kaelum");
   const { testApp } = await import("kaelum/testing");
 
-  const app = createKaelum({ shutdown: false });
+  const app = kaelum({ shutdown: false, observability: { logs: false } });
   app.resource("/users", { get: (c) => ({ id: c.params.id }) });
 
   const client = testApp(app);

@@ -1,11 +1,11 @@
 import request from "supertest";
-import { createKaelum, k, type LogEntry, type Middleware, type Plugin } from "../src/index.js";
+import { kaelum, k, type LogEntry, type Middleware, type Plugin } from "../src/index.js";
 
 const quiet = { health: false, shutdown: false } as const;
 
 describe("app.resource", () => {
   test("maps the actions to CRUD routes", async () => {
-    const app = createKaelum(quiet);
+    const app = kaelum(quiet);
     app.resource("/users", {
       list: () => [{ id: "1" }],
       create: (c) => c.created(c.body),
@@ -33,7 +33,7 @@ describe("app.resource", () => {
   });
 
   test("only the given actions are registered", async () => {
-    const app = createKaelum(quiet);
+    const app = kaelum(quiet);
     app.resource("/posts", { list: () => [] });
 
     expect(app.routes()).toEqual([{ method: "GET", path: "/posts" }]);
@@ -48,7 +48,7 @@ describe("app.resource", () => {
       next();
     };
 
-    const app = createKaelum(quiet);
+    const app = kaelum(quiet);
     app.resource("/items", {
       use: [track],
       create: { body: k.object({ name: k.string() }), handler: (c) => c.created({ name: c.body.name }) },
@@ -62,7 +62,7 @@ describe("app.resource", () => {
   });
 
   test("rejects unknown keys and non-objects", () => {
-    const app = createKaelum(quiet);
+    const app = kaelum(quiet);
     expect(() => app.resource("/x", { index: () => [] } as never)).toThrow(/unknown key "index"/);
     expect(() => app.resource("/x", null as never)).toThrow(/expected an object of actions/);
     expect(app.routes()).toEqual([]);
@@ -71,7 +71,7 @@ describe("app.resource", () => {
 
 describe("method shortcuts", () => {
   test("register a single endpoint each", async () => {
-    const app = createKaelum(quiet);
+    const app = kaelum(quiet);
     app
       .get("/a/:id", (c) => ({ id: c.params.id }))
       .post("/a", { body: k.object({ n: k.number() }), handler: (c) => c.created({ n: c.body.n }) })
@@ -88,7 +88,7 @@ describe("method shortcuts", () => {
   });
 
   test("share the route table with app.route", () => {
-    const app = createKaelum(quiet);
+    const app = kaelum(quiet);
     app.route("/a", { get: () => "x" });
     expect(() => app.get("/a", () => "y")).toThrow(/GET \/a is already registered/);
   });
@@ -100,7 +100,7 @@ describe("app.plugin", () => {
       app.route(path, { get: () => "hello" });
     };
 
-    const app = createKaelum(quiet);
+    const app = kaelum(quiet);
     expect(app.plugin(hello, { path: "/hi" })).toBe(app);
     expect((await request(app.express).get("/hi")).text).toBe("hello");
   });
@@ -109,19 +109,19 @@ describe("app.plugin", () => {
     const calls: unknown[] = [];
     const plain: Plugin = (_app, options) => void calls.push(options);
 
-    createKaelum(quiet).plugin(plain);
+    kaelum(quiet).plugin(plain);
     expect(calls).toEqual([undefined]);
   });
 
   test("rejects anything that is not a function", () => {
-    expect(() => createKaelum(quiet).plugin({} as never)).toThrow(/expected a function/);
+    expect(() => kaelum(quiet).plugin({} as never)).toThrow(/expected a function/);
   });
 });
 
 describe("close and onClose", () => {
   test("hooks run in order, after the server stopped", async () => {
     const order: string[] = [];
-    const app = createKaelum(quiet);
+    const app = kaelum(quiet);
     app.onClose(() => void order.push("first"));
     app.onClose(async () => {
       await new Promise((resolve) => setTimeout(resolve, 5));
@@ -138,7 +138,7 @@ describe("close and onClose", () => {
   test("a failing hook is logged and does not stop the others", async () => {
     const entries: LogEntry[] = [];
     const ran: string[] = [];
-    const app = createKaelum({ ...quiet, observability: { logger: (entry) => entries.push(entry) } });
+    const app = kaelum({ ...quiet, observability: { logger: (entry) => entries.push(entry) } });
     app.onClose(() => {
       throw new Error("db gone");
     });
@@ -154,7 +154,7 @@ describe("close and onClose", () => {
 
   test("concurrent close() calls share one shutdown", async () => {
     let runs = 0;
-    const app = createKaelum(quiet);
+    const app = kaelum(quiet);
     app.onClose(() => void runs++);
 
     await app.start(0);
@@ -164,7 +164,7 @@ describe("close and onClose", () => {
   });
 
   test("connections still open after the timeout are cut", async () => {
-    const app = createKaelum({ health: false, shutdown: { timeout: 50, signals: [] } });
+    const app = kaelum({ health: false, shutdown: { timeout: 50, signals: [] } });
     app.route("/hang", { get: () => new Promise(() => {}) });
 
     const server = await app.start(0);
@@ -180,7 +180,7 @@ describe("close and onClose", () => {
   });
 
   test("onClose rejects anything that is not a function", () => {
-    expect(() => createKaelum(quiet).onClose("x" as never)).toThrow(/expected a function/);
+    expect(() => kaelum(quiet).onClose("x" as never)).toThrow(/expected a function/);
   });
 });
 
@@ -190,7 +190,7 @@ describe("shutdown signals", () => {
     const before = process.listenerCount("SIGTERM");
     const closed: string[] = [];
 
-    const app = createKaelum({ health: false, observability: { logger: () => {} } });
+    const app = kaelum({ health: false, observability: { logger: () => {} } });
     app.onClose(() => void closed.push("hook"));
     await app.start(0);
     expect(process.listenerCount("SIGTERM")).toBe(before + 1);
@@ -205,7 +205,7 @@ describe("shutdown signals", () => {
 
   test("shutdown: false installs no signal handlers", async () => {
     const before = process.listenerCount("SIGINT");
-    const app = createKaelum(quiet);
+    const app = kaelum(quiet);
     await app.start(0);
 
     expect(process.listenerCount("SIGINT")).toBe(before);
@@ -216,7 +216,7 @@ describe("shutdown signals", () => {
 describe("logging", () => {
   test("c.log writes to the sink with the request ID", async () => {
     const entries: LogEntry[] = [];
-    const app = createKaelum({ ...quiet, observability: { logger: (entry) => entries.push(entry) } });
+    const app = kaelum({ ...quiet, observability: { logger: (entry) => entries.push(entry) } });
     app.route("/", {
       get: (c) => {
         c.log.info("hello", { user: 1 });
@@ -236,7 +236,7 @@ describe("logging", () => {
 
   test("app.log has no request ID", () => {
     const entries: LogEntry[] = [];
-    const app = createKaelum({ ...quiet, observability: { logger: (entry) => entries.push(entry) } });
+    const app = kaelum({ ...quiet, observability: { logger: (entry) => entries.push(entry) } });
 
     app.log.debug("booting");
 
@@ -246,7 +246,7 @@ describe("logging", () => {
 
   test("unhandled errors go to the sink, with the request ID and the error", async () => {
     const entries: LogEntry[] = [];
-    const app = createKaelum({ ...quiet, observability: { logger: (entry) => entries.push(entry) } });
+    const app = kaelum({ ...quiet, observability: { logger: (entry) => entries.push(entry) } });
     app.route("/boom", {
       get: () => {
         throw new Error("kaput");

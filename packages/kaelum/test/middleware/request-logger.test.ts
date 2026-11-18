@@ -1,9 +1,8 @@
 import express from "express";
 import request from "supertest";
-import { createRequestLogger, formatRequestLine } from "../../src/core/requestLogger.js";
-import createApp from "../../src/createApp.js";
+import { createRequestLogger, formatRequestLine } from "../../src/middleware/request-logger.js";
 
-describe("core/requestLogger", () => {
+describe("requestLogger", () => {
   const info = { method: "GET", url: "/users", status: 200, durationMs: 1.9966, length: "76" };
 
   test("tiny format has no colors", () => {
@@ -36,22 +35,4 @@ describe("core/requestLogger", () => {
     expect(lines[1]).toMatch(/^GET \/missing 404 /);
   });
 
-  test("setConfig({ logs }) installs and removes the logger", () => {
-    const log = vi.spyOn(console, "log").mockImplementation(() => {});
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const app = createApp();
-
-    app.setConfig({ logs: true });
-    expect(app.locals._kaelum_logger).toBeTypeOf("function");
-
-    app.setConfig({ logs: "combined" });
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('unknown logs format "combined"'));
-    expect(app.locals._kaelum_logger).toBeTypeOf("function");
-
-    app.setConfig({ logs: false });
-    expect(app.locals._kaelum_logger).toBeNull();
-
-    log.mockRestore();
-    warn.mockRestore();
-  });
 });
