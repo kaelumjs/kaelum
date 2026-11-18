@@ -1,0 +1,145 @@
+---
+import { Icon } from "@astrojs/starlight/components";
+
+const features = [
+  {
+    icon: "approve-check-circle",
+    title: "Secure by default",
+    text: "Security headers, a body size limit and errors that never leak. CORS, rate limiting, CSRF and IP rules are one option away.",
+    href: "/guide/security/",
+  },
+  {
+    icon: "seti:folder",
+    title: "Route trees",
+    text: "Declare a whole API as one nested object. Middleware in `use` applies to its level and everything below.",
+    href: "/guide/routing/",
+  },
+  {
+    icon: "seti:typescript",
+    title: "Types without generics",
+    text: "Path params, bodies and queries are inferred from the path and the schema. Write the route, get the types.",
+    href: "/guide/context/",
+  },
+  {
+    icon: "list-format",
+    title: "Any schema library",
+    text: "Zod, Valibot, ArkType or the built-in `k`. Invalid input answers 400 with every issue listed.",
+    href: "/guide/validation/",
+  },
+  {
+    icon: "magnifier",
+    title: "Observable",
+    text: "Request IDs, request logs, a structured logger, Server-Timing and a health check, all wired up.",
+    href: "/guide/observability/",
+  },
+  {
+    icon: "puzzle",
+    title: "Still Express",
+    text: "Every Express middleware works. Mount a Kaelum app inside an existing Express app and migrate one route at a time.",
+    href: "/guide/express/",
+  },
+];
+
+// Inline code in the descriptions.
+const html = (text: string) => text.replace(/`([^`]+)`/g, "<code>$1</code>");
+---
+
+<div class="k-features not-content">
+  {
+    features.map((feature) => (
+      <a class="k-feature" href={feature.href}>
+        <span class="k-feature__icon">
+          <Icon name={feature.icon as any} size="1.35rem" />
+        </span>
+        <span class="k-feature__title">{feature.title}</span>
+        <span class="k-feature__text" set:html={html(feature.text)} />
+        <span class="k-feature__more">
+          Learn more <Icon name="right-arrow" size="0.9rem" />
+        </span>
+      </a>
+    ))
+  }
+</div>
+
+<style>
+  .k-features {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  @media (min-width: 40rem) {
+    .k-features {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 62rem) {
+    .k-features {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .k-feature {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 1.35rem;
+    border: 1px solid var(--k-border);
+    border-radius: var(--k-radius-lg);
+    background: var(--k-surface);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .k-feature:hover,
+  .k-feature:focus-visible {
+    border-color: var(--k-border-strong);
+  }
+
+  .k-feature__icon {
+    display: grid;
+    place-items: center;
+    width: 2.3rem;
+    height: 2.3rem;
+    border-radius: var(--k-radius-sm);
+    background: var(--sl-color-accent-low);
+    color: var(--sl-color-accent);
+  }
+
+  .k-feature__title {
+    margin-top: 0.25rem;
+    color: var(--sl-color-white);
+    font-size: var(--sl-text-base);
+    font-weight: 650;
+  }
+
+  .k-feature__text {
+    color: var(--sl-color-gray-2);
+    font-size: var(--sl-text-sm);
+    line-height: 1.6;
+  }
+
+  .k-feature__text :global(code) {
+    padding: 0.05em 0.3em;
+    border-radius: 0.3rem;
+    background: var(--sl-color-bg);
+    font-size: 0.9em;
+  }
+
+  .k-feature__more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: auto;
+    padding-top: 0.25rem;
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-sm);
+    font-weight: 600;
+  }
+
+  .k-feature:hover .k-feature__more {
+    color: var(--sl-color-accent);
+  }
+</style>

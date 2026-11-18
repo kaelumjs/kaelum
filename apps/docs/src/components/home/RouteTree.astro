@@ -1,0 +1,223 @@
+---
+// A route tree next to the routes it registers. Hovering or focusing either
+// side highlights the matching line on the other.
+interface Line {
+  indent: number;
+  text: string;
+  route?: string;
+  note?: string;
+}
+
+const tree: Line[] = [
+  { indent: 0, text: 'app.route("/users", {' },
+  { indent: 1, text: "get: listUsers,", route: "GET /users" },
+  { indent: 1, text: "post: createUser,", route: "POST /users" },
+  { indent: 1, text: '"/:id": {' },
+  { indent: 2, text: "use: [auth],", note: "runs for everything below" },
+  { indent: 2, text: "get: getUser,", route: "GET /users/:id" },
+  { indent: 2, text: "delete: deleteUser,", route: "DELETE /users/:id" },
+  { indent: 2, text: '"/posts": {' },
+  { indent: 3, text: "get: listPosts,", route: "GET /users/:id/posts" },
+  { indent: 2, text: "}," },
+  { indent: 1, text: "}," },
+  { indent: 0, text: "});" },
+];
+
+const routes = tree.filter((line) => line.route).map((line) => line.route!);
+const authed = new Set(["GET /users/:id", "DELETE /users/:id", "GET /users/:id/posts"]);
+---
+
+<div class="k-tree not-content" data-route-tree>
+  <div class="k-tree__code" aria-label="Route tree">
+    {
+      tree.map((line) =>
+        line.route ? (
+          <button type="button" class="k-tree__line is-route" data-route={line.route} style={`--indent:${line.indent}`}>
+            {line.text}
+          </button>
+        ) : (
+          <div class={`k-tree__line${line.note ? " is-use" : ""}`} data-use={line.note ? "" : undefined} style={`--indent:${line.indent}`}>
+            {line.text}
+            {line.note && <span class="k-tree__note">{line.note}</span>}
+          </div>
+        )
+      )
+    }
+  </div>
+
+  <ul class="k-tree__routes" aria-label="Registered routes">
+    {
+      routes.map((route) => {
+        const [method, path] = route.split(" ");
+        return (
+          <li>
+            <button type="button" class="k-route" data-route={route} data-auth={authed.has(route) ? "" : undefined}>
+              <span class={`k-method k-method--${method!.toLowerCase()}`}>{method}</span>
+              <span class="k-route__path">{path}</span>
+              {authed.has(route) && <span class="k-route__auth">auth</span>}
+            </button>
+          </li>
+        );
+      })
+    }
+  </ul>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-route-tree]").forEach((root) => {
+    const items = [...root.querySelectorAll<HTMLElement>("[data-route]")];
+    const use = root.querySelector<HTMLElement>("[data-use]");
+
+    const highlight = (route: string | null) => {
+      for (const item of items) item.classList.toggle("is-active", item.dataset.route === route);
+      const needsAuth = items.some((item) => item.dataset.route === route && item.hasAttribute("data-auth"));
+      use?.classList.toggle("is-active", needsAuth);
+    };
+
+    for (const item of items) {
+      const route = item.dataset.route ?? null;
+      item.addEventListener("mouseenter", () => highlight(route));
+      item.addEventListener("focus", () => highlight(route));
+      item.addEventListener("click", () => highlight(route));
+    }
+    root.addEventListener("mouseleave", () => highlight(null));
+  });
+</script>
+
+<style>
+  .k-tree {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  @media (min-width: 50rem) {
+    .k-tree {
+      grid-template-columns: 1.2fr 1fr;
+    }
+  }
+
+  .k-tree__code,
+  .k-tree__routes {
+    margin: 0;
+    padding: 1rem;
+    border: 1px solid var(--k-border);
+    border-radius: var(--k-radius-lg);
+    background: var(--k-surface);
+    list-style: none;
+  }
+
+  .k-tree__code {
+    font-family: var(--__sl-font-mono, var(--sl-font-system-mono));
+    font-size: var(--sl-text-sm);
+    overflow-x: auto;
+  }
+
+  .k-tree__line {
+    display: block;
+    width: 100%;
+    padding: 0.2rem 0.5rem 0.2rem calc(0.5rem + var(--indent) * 1.25rem);
+    border: none;
+    border-radius: var(--k-radius-sm);
+    background: none;
+    color: var(--sl-color-gray-2);
+    font: inherit;
+    text-align: start;
+    white-space: pre;
+  }
+
+  .k-tree__line.is-route {
+    color: var(--sl-color-white);
+    cursor: pointer;
+  }
+
+  .k-tree__note {
+    margin-inline-start: 0.75rem;
+    color: var(--sl-color-gray-4);
+    font-style: italic;
+  }
+
+  .k-tree__routes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .k-route {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid transparent;
+    border-radius: var(--k-radius);
+    background: var(--sl-color-bg);
+    color: var(--sl-color-white);
+    font-family: var(--__sl-font-mono, var(--sl-font-system-mono));
+    font-size: var(--sl-text-sm);
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .k-route__path {
+    flex: 1;
+  }
+
+  .k-route__auth {
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: var(--sl-color-accent-low);
+    color: var(--sl-color-accent);
+    font-family: var(--sl-font);
+    font-size: var(--sl-text-2xs);
+    font-weight: 600;
+  }
+
+  .k-method {
+    min-width: 4.2rem;
+    padding: 0.15rem 0;
+    border-radius: 0.4rem;
+    font-size: var(--sl-text-2xs);
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .k-method--get {
+    background: color-mix(in srgb, #10b981 18%, transparent);
+    color: #10b981;
+  }
+
+  .k-method--post {
+    background: color-mix(in srgb, #3b82f6 18%, transparent);
+    color: #3b82f6;
+  }
+
+  .k-method--delete {
+    background: color-mix(in srgb, #ef4444 18%, transparent);
+    color: #ef4444;
+  }
+
+  .k-tree__line,
+  .k-route {
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease;
+  }
+
+  .k-tree__line.is-active {
+    background: var(--sl-color-accent-low);
+  }
+
+  .k-tree__line.is-use.is-active {
+    background: var(--k-surface-2);
+  }
+
+  .k-route.is-active {
+    border-color: var(--sl-color-accent);
+  }
+
+  .k-tree button:focus-visible {
+    outline: 2px solid var(--sl-color-accent);
+    outline-offset: 1px;
+  }
+</style>

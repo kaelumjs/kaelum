@@ -7,8 +7,7 @@ const docsDir = fileURLToPath(new URL("../content/docs/", import.meta.url));
 const sections = [
   ["getting-started", "Getting Started"],
   ["guide", "Guide"],
-  ["api-reference", "API Reference"],
-  ["examples", "Examples"],
+  ["reference", "Reference"],
 ];
 
 /**

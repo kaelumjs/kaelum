@@ -1,0 +1,255 @@
+---
+// A code window with tabs. Plain buttons and a tiny script: no framework.
+import { Code } from "@astrojs/starlight/components";
+
+const tabs = [
+  {
+    id: "routes",
+    label: "routes.ts",
+    code: `import kaelum, { k } from "kaelum";
+
+const app = kaelum();
+
+app.route("/users", {
+  get: () => db.users.all(),
+
+  post: {
+    body: k.object({ name: k.string().min(2) }),
+    handler: (c) => c.created(db.users.create(c.body)),
+  },
+
+  "/:id": {
+    use: [auth],
+    get: (c) => db.users.find(c.params.id) ?? c.notFound(),
+  },
+});
+
+await app.start(3000);`,
+  },
+  {
+    id: "types",
+    label: "types",
+    code: `app.route("/orgs/:orgId", {
+  "/users/:userId": {
+    patch: {
+      body: k.object({ role: k.enum(["admin", "user"]) }),
+      handler: (c) => {
+        c.params; // { orgId: string; userId: string }
+        c.body;   // { role: "admin" | "user" }
+
+        // @ts-expect-error: "email" is not in the body schema
+        c.body.email;
+      },
+    },
+  },
+});`,
+  },
+  {
+    id: "errors",
+    label: "response",
+    code: `// POST /users  { "name": "A" }
+HTTP/1.1 400 Bad Request
+X-Request-Id: 5f0c3c1e-8a2b-4d7e-9c1a-2b6f0e4d8a11
+
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Validation failed",
+    "details": {
+      "issues": [
+        { "source": "body", "path": "name",
+          "message": "Must be at least 2 characters" }
+      ]
+    }
+  }
+}`,
+    lang: "http",
+  },
+  {
+    id: "test",
+    label: "app.test.ts",
+    code: `import { testApp } from "kaelum/testing";
+
+const client = testApp(createApp());
+
+test("creates a user", async () => {
+  const res = await client.post("/users", { name: "Ada" });
+
+  assert.equal(res.status, 201);
+  assert.equal(res.body.name, "Ada");
+});`,
+  },
+];
+---
+
+<div class="k-window" data-tabs>
+  <div class="k-window__bar">
+    <span class="k-window__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    <div class="k-window__tabs" role="tablist" aria-label="Code examples">
+      {
+        tabs.map((tab, i) => (
+          <button
+            type="button"
+            role="tab"
+            id={`tab-${tab.id}`}
+            aria-controls={`panel-${tab.id}`}
+            aria-selected={i === 0 ? "true" : "false"}
+            tabindex={i === 0 ? 0 : -1}
+          >
+            {tab.label}
+          </button>
+        ))
+      }
+    </div>
+  </div>
+  <div class="k-window__body">
+    {
+      tabs.map((tab, i) => (
+        <div
+          class="k-window__panel"
+          role="tabpanel"
+          id={`panel-${tab.id}`}
+          aria-labelledby={`tab-${tab.id}`}
+          data-active={i === 0 ? "" : undefined}
+          inert={i !== 0}
+        >
+          <Code code={tab.code} lang={tab.lang ?? "ts"} />
+        </div>
+      ))
+    }
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-tabs]").forEach((root) => {
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+
+    const select = (tab: HTMLButtonElement) => {
+      for (const other of tabs) {
+        const selected = other === tab;
+        other.setAttribute("aria-selected", String(selected));
+        other.tabIndex = selected ? 0 : -1;
+        const panel = root.querySelector<HTMLElement>(`#${other.getAttribute("aria-controls")}`);
+        if (!panel) continue;
+        // Panels stay in the layout (stacked), so switching never changes the window size.
+        panel.toggleAttribute("data-active", selected);
+        panel.inert = !selected;
+      }
+    };
+
+    tabs.forEach((tab, i) => {
+      tab.addEventListener("click", () => select(tab));
+      tab.addEventListener("keydown", (event) => {
+        const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+        if (!step) return;
+        const next = tabs[(i + step + tabs.length) % tabs.length]!;
+        select(next);
+        next.focus();
+      });
+    });
+  });
+</script>
+
+<style>
+  .k-window {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--k-border);
+    border-radius: var(--k-radius-lg);
+    background: var(--k-surface);
+    overflow: hidden;
+  }
+
+  .k-window__bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.55rem 0.85rem;
+    border-bottom: 1px solid var(--k-border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .k-window__bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .k-window__dots {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.4rem;
+  }
+
+  .k-window__dots i {
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 50%;
+    background: var(--k-border-strong);
+  }
+
+  .k-window__tabs {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .k-window__tabs button {
+    padding: 0.3rem 0.7rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: none;
+    color: var(--sl-color-gray-3);
+    font: inherit;
+    font-family: var(--__sl-font-mono, var(--sl-font-system-mono));
+    font-size: var(--sl-text-xs);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .k-window__tabs button:hover {
+    color: var(--sl-color-white);
+  }
+
+  .k-window__tabs button[aria-selected="true"] {
+    border-color: var(--k-border);
+    background: var(--sl-color-bg);
+    color: var(--sl-color-white);
+  }
+
+  /* Every panel sits in the same grid cell: the body is as tall as the
+     longest example, and only the active one is visible. */
+  .k-window__body {
+    display: grid;
+    background: var(--sl-color-bg);
+  }
+
+  .k-window__panel {
+    grid-area: 1 / 1;
+    min-width: 0;
+    visibility: hidden;
+  }
+
+  .k-window__panel[data-active] {
+    visibility: visible;
+  }
+
+  .k-window__panel :global(.expressive-code) {
+    margin: 0;
+  }
+
+  .k-window__panel :global(.expressive-code .frame) {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .k-window__panel :global(.expressive-code pre) {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  /* The copy button of each sample would show through stacked panels. */
+  .k-window__panel:not([data-active]) :global(.copy) {
+    display: none;
+  }
+</style>

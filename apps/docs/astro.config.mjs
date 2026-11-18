@@ -14,7 +14,7 @@ export default defineConfig({
     starlight({
       title: "Kaelum",
       description:
-        "Kaelum is a minimalist Node.js framework for building web apps and REST APIs on top of Express.",
+        "Kaelum is Express, production-ready by default: typed route trees, schema validation and secure defaults for Node.js.",
       logo: {
         light: "./src/assets/logo-light.svg",
         dark: "./src/assets/logo-dark.svg",
@@ -35,9 +35,16 @@ export default defineConfig({
       editLink: {
         baseUrl: "https://github.com/kaelumjs/kaelum/edit/main/apps/docs/",
       },
-      customCss: ["./src/styles/custom.css"],
+      customCss: ["@fontsource-variable/inter", "./src/styles/custom.css"],
       components: {
+        Hero: "./src/components/Hero.astro",
         PageTitle: "./src/components/PageTitle.astro",
+      },
+      expressiveCode: {
+        styleOverrides: {
+          borderRadius: "0.875rem",
+          codeFontSize: "0.85rem",
+        },
       },
       routeMiddleware: "./src/routeData.ts",
       plugins: [
@@ -52,38 +59,15 @@ export default defineConfig({
       sidebar: [
         {
           label: "Getting Started",
-          items: [
-            {
-              label: "Introduction",
-              items: [{ autogenerate: { directory: "getting-started/introduction" } }],
-            },
-            {
-              label: "Configuration",
-              items: [{ autogenerate: { directory: "getting-started/configuration" } }],
-            },
-          ],
+          items: [{ autogenerate: { directory: "getting-started" } }],
         },
         {
           label: "Guide",
-          items: [
-            {
-              label: "Core Functions",
-              items: [{ autogenerate: { directory: "guide/core-functions" } }],
-            },
-            {
-              label: "Features",
-              items: [{ autogenerate: { directory: "guide/features" } }],
-            },
-          ],
+          items: [{ autogenerate: { directory: "guide" } }],
         },
         {
-          label: "API Reference",
-          collapsed: true,
-          items: [{ autogenerate: { directory: "api-reference" } }],
-        },
-        {
-          label: "Examples",
-          items: [{ autogenerate: { directory: "examples" } }],
+          label: "Reference",
+          items: [{ autogenerate: { directory: "reference" } }],
         },
         {
           label: "Changelog",
