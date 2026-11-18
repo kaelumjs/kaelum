@@ -19,10 +19,10 @@ function tempDir(t) {
 }
 
 const templates = {
-  "js-web": ["app.js", "routes.js", "views/index.html", "public/style.css"],
-  "js-api": ["app.js", "routes.js", "controllers/usersController.js"],
-  "ts-web": ["src/app.ts", "src/routes.ts", "tsconfig.json", "views/index.html"],
-  "ts-api": ["src/app.ts", "src/routes.ts", "tsconfig.json"],
+  "js-web": ["src/app.js", "src/server.js", "src/app.test.js", "src/routes/pages.js", "views/index.html", "public/style.css"],
+  "js-api": ["src/app.js", "src/server.js", "src/app.test.js", "src/routes/users.js"],
+  "ts-web": ["src/app.ts", "src/server.ts", "src/app.test.ts", "src/routes/pages.ts", "tsconfig.json", "views/index.html"],
+  "ts-api": ["src/app.ts", "src/server.ts", "src/app.test.ts", "src/routes/users.ts", "tsconfig.json", "tsconfig.build.json"],
 };
 
 for (const [template, files] of Object.entries(templates)) {
@@ -38,6 +38,7 @@ for (const [template, files] of Object.entries(templates)) {
     const pkg = JSON.parse(fs.readFileSync(path.join(project, "package.json"), "utf8"));
     assert.equal(pkg.name, "my-app");
     assert.equal(pkg.dependencies.kaelum, `^${version}`, "depends on the matching kaelum release");
+    assert.equal(pkg.type, "module");
     assert.ok(!fs.existsSync(path.join(project, "node_modules")), "nothing is installed");
   });
 }
@@ -45,7 +46,7 @@ for (const [template, files] of Object.entries(templates)) {
 test("accepts the legacy `api` alias", (t) => {
   const cwd = tempDir(t);
   run(["legacy", "-t", "api", "--no-install"], cwd);
-  assert.ok(fs.existsSync(path.join(cwd, "legacy", "controllers", "usersController.js")));
+  assert.ok(fs.existsSync(path.join(cwd, "legacy", "src", "routes", "users.js")));
 });
 
 test("rejects an unknown template", (t) => {

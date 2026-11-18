@@ -55,13 +55,13 @@
   },
   "homepage": "https://kaelumjs.matthcodes.dev",
   "dependencies": {
+    "@types/express": "^5.0.6",
     "cors": "^2.8.6",
     "express": "^5.3.0",
     "helmet": "^8.3.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
     "@types/node": "^24.0.0",
     "@types/supertest": "^7.2.1",
     "@vitest/coverage-v8": "^5.1.0",

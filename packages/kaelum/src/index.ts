@@ -24,6 +24,8 @@ export { ipRestriction } from "./middleware/ip-restriction.js";
 export type { IpRestrictionOptions } from "./middleware/ip-restriction.js";
 export { rateLimit } from "./middleware/rate-limit.js";
 export type { RateLimitOptions, RateLimitStore } from "./middleware/rate-limit.js";
+export { serveStatic } from "./middleware/static.js";
+export type { ServeStaticOptions } from "./middleware/static.js";
 export type { CsrfOptions } from "./middleware/csrf.js";
 export type { TimingOptions } from "./middleware/timing.js";
 
