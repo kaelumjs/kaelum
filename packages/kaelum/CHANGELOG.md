@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.0.0-alpha.2](https://github.com/kaelumjs/kaelum/compare/kaelum-v2.0.0-alpha.1...kaelum-v2.0.0-alpha.2) (2026-11-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* make kaelum() the default export and remove the 1.x API ([#95](https://github.com/kaelumjs/kaelum/issues/95))
+* the default export now creates a 2.0 app (kaelum()), replacing the 1.x factory and its setConfig/ddRoute/piRoute API. createKaelum is renamed to kaelum. The kaelum/validate and kaelum/test subpaths are removed (use the endpoint schemas and kaelum/testing). .env files are no longer loaded on import, and ejs is no longer a dependency.
+
+### Features
+
+* add resource routes, plugins, graceful shutdown, logger and testing client ([7e44516](https://github.com/kaelumjs/kaelum/commit/7e44516b4554d686ab2dc4464bcfe83dbaa77bc1))
+* add resource routes, plugins, graceful shutdown, logger and testing client ([#93](https://github.com/kaelumjs/kaelum/issues/93)) ([9685b35](https://github.com/kaelumjs/kaelum/commit/9685b35c4f21dec3bd80c76cbda3b1db58bf7662))
+* make kaelum() the default export and remove the 1.x API ([bd90d85](https://github.com/kaelumjs/kaelum/commit/bd90d85b9694c32da9ca6fd7ceb7154f0979fb99))
+* make kaelum() the default export and remove the 1.x API ([#95](https://github.com/kaelumjs/kaelum/issues/95)) ([295fc32](https://github.com/kaelumjs/kaelum/commit/295fc32a66db9f1f6fa40e10ce4caa3f162ed828))
+* move the create-kaelum templates to the 2.0 API ([8a88413](https://github.com/kaelumjs/kaelum/commit/8a884134ccd21cae19a6a16219ad3e50d2d4f756))
+* move the create-kaelum templates to the 2.0 API ([#96](https://github.com/kaelumjs/kaelum/issues/96)) ([c0c21c5](https://github.com/kaelumjs/kaelum/commit/c0c21c52968c71082d51131d0af700b2b9d57dc0))
+
 ## [2.0.0-alpha.1](https://github.com/kaelumjs/kaelum/compare/kaelum-v2.0.0-alpha.0...kaelum-v2.0.0-alpha.1) (2026-11-15)
 
 

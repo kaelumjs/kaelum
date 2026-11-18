@@ -1,6 +1,6 @@
 {
   "name": "kaelum",
-  "version": "2.0.0-alpha.1",
+  "version": "2.0.0-alpha.2",
   "description": "Express, production-ready by default: typed route trees, schema validation and secure defaults.",
   "type": "module",
   "main": "./dist/index.js",
