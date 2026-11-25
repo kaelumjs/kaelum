@@ -1,8 +1,11 @@
 import type { Server } from "node:http";
+import { createRequire } from "node:module";
+import path from "node:path";
 import cors from "cors";
 import express, { type Express, type NextFunction, type Request, type Response, type Router } from "express";
 import helmet from "helmet";
 import { resolveOptions, type KaelumOptions, type ResolvedOptions } from "./config.js";
+import { Context } from "./context.js";
 import { HttpError, errorBody } from "./http-error.js";
 import { createLogger, type LogSink, type Logger } from "./logger.js";
 import { doubleSubmit, originCheck } from "./middleware/csrf.js";
@@ -10,8 +13,10 @@ import { ipRestriction } from "./middleware/ip-restriction.js";
 import { rateLimit } from "./middleware/rate-limit.js";
 import { requestId } from "./middleware/request-id.js";
 import { createRequestLogger } from "./middleware/request-logger.js";
+import { serveStatic } from "./middleware/static.js";
 import { serverTiming } from "./middleware/timing.js";
-import { RouteTable } from "./routing/table.js";
+import { prettyJsonOnQuery, redirectMap, trailingSlashRedirect } from "./middleware/urls.js";
+import { RouteTable, sendResult } from "./routing/table.js";
 import { flattenTree } from "./routing/tree.js";
 import type {
   DefinedRoutes,
@@ -65,6 +70,7 @@ export class Kaelum {
   readonly #shutdown: ResolvedOptions["shutdown"];
   readonly #closeHooks: CloseHook[] = [];
   readonly #signalHandlers = new Map<NodeJS.Signals, () => void>();
+  readonly #port: number;
   #server: Server | undefined;
   #closing: Promise<void> | undefined;
 
@@ -72,11 +78,15 @@ export class Kaelum {
     const config = resolveOptions(options);
     this.log = createLogger(config.logger);
     this.#shutdown = config.shutdown;
+    this.#port = config.port;
 
     this.express = express();
     this.express.disable("x-powered-by");
     this.express.set("trust proxy", config.trustProxy);
     this.express.set("query parser", config.query);
+    this.express.set("etag", config.etag);
+    if (config.prettyJson === true) this.express.set("json spaces", 2);
+    if (config.views) useViewEngine(this.express, config.views);
 
     for (const middleware of builtInMiddleware(config)) this.express.use(middleware);
 
@@ -91,8 +101,8 @@ export class Kaelum {
       this.route(path, { get: healthHandler(check) } as RouteTree<unknown, string>);
     }
 
-    this.express.use(notFound);
-    this.express.use(errorHandler(config.logger));
+    this.express.use(notFoundHandler(config.notFound, config.logger));
+    this.express.use(errorHandler(config.onError, config.logger));
   }
 
   /**
@@ -244,9 +254,9 @@ export class Kaelum {
 
   /**
    * Start listening. Resolves with the server once it is ready.
-   * Defaults to `process.env.PORT`, then 3000.
+   * Port: the one passed, then `PORT`, then the `port` option, then 3000.
    */
-  start(port: number | string = process.env.PORT ?? 3000): Promise<Server> {
+  start(port: number | string = process.env.PORT ?? this.#port): Promise<Server> {
     if (this.#server) {
       return Promise.reject(new Error("Kaelum: the app is already started"));
     }
@@ -352,12 +362,23 @@ function builtInMiddleware(config: ResolvedOptions): Middleware[] {
   if (config.helmet) stack.push(helmet(config.helmet));
   if (config.cors) stack.push(cors(config.cors));
 
+  // URL rewrites answer before anything else has to run.
+  if (config.trailingSlash) stack.push(trailingSlashRedirect());
+  if (config.redirects.size > 0) stack.push(redirectMap(config.redirects));
+  if (config.prettyJson === "query") stack.push(prettyJsonOnQuery());
+
   // Cheap rejections come before the body is read.
   if (config.ipRestriction) stack.push(ipRestriction(config.ipRestriction));
   if (config.rateLimit) stack.push(rateLimit(config.rateLimit));
   if (config.csrf) {
     const { strategy = "origin", ...csrfOptions } = config.csrf;
     stack.push(strategy === "token" ? doubleSubmit(csrfOptions) : originCheck(csrfOptions));
+  }
+
+  if (config.static) {
+    const { dir, prefix, ...options } = config.static;
+    const files = serveStatic(dir, options);
+    stack.push(prefix === "/" ? files : express.Router().use(prefix, files));
   }
 
   if (config.body) {
@@ -402,14 +423,69 @@ export function defineRoutes<const P extends string>(path: P) {
   });
 }
 
-function notFound(_req: Request, _res: Response, next: NextFunction): void {
-  next(new HttpError(404));
+/**
+ * Load the view engine from the project, not from Express's own folder: with
+ * strict package managers (pnpm) Express cannot see the project's packages.
+ */
+function useViewEngine(app: Express, { engine, dir }: { engine: string; dir: string }): void {
+  const load = createRequire(path.join(process.cwd(), "package.json"));
+  let module: { __express?: unknown; renderFile?: unknown };
+  try {
+    module = load(engine);
+  } catch {
+    throw new Error(`Kaelum views: the "${engine}" package is not installed. Run: npm install ${engine}`);
+  }
+
+  const render = module.__express ?? module.renderFile;
+  if (typeof render !== "function") {
+    throw new Error(`Kaelum views: "${engine}" is not an Express view engine`);
+  }
+
+  app.engine(engine, render as Parameters<Express["engine"]>[1]);
+  app.set("view engine", engine);
+  app.set("views", dir);
 }
 
-function errorHandler(sink: LogSink) {
-  return (err: unknown, req: Request, res: Response, next: NextFunction): void => {
+type NotFound = ResolvedOptions["notFound"];
+type OnError = ResolvedOptions["onError"];
+
+function notFoundHandler(custom: NotFound, sink: LogSink) {
+  if (!custom) {
+    return (_req: Request, _res: Response, next: NextFunction): void => next(new HttpError(404));
+  }
+
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      res.status(404);
+      const result = await custom(new Context(req, res, undefined, sink));
+      if (result === undefined && !res.headersSent) return next(new HttpError(404));
+      sendResult(result, res);
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+function errorHandler(onError: OnError, sink: LogSink) {
+  return async (err: unknown, req: Request, res: Response, next: NextFunction): Promise<void> => {
     // The response already started: all that is left is to let Express close it.
     if (res.headersSent) return next(err);
+
+    const status = err instanceof HttpError ? err.status : (statusOf(err) ?? 500);
+    if (status >= 500) {
+      createLogger(sink, req.id).error(`Unhandled error in ${req.method} ${req.path}`, { err });
+    }
+
+    if (onError) {
+      try {
+        res.status(status);
+        const result = await onError(err, new Context(req, res, undefined, sink));
+        if (result !== undefined || res.headersSent) return sendResult(result, res);
+      } catch (hookError) {
+        createLogger(sink, req.id).error("onError failed", { err: hookError });
+      }
+      if (res.headersSent) return;
+    }
 
     if (err instanceof HttpError) {
       res.status(err.status).json(err.toJSON());
@@ -417,13 +493,11 @@ function errorHandler(sink: LogSink) {
     }
 
     // Errors from body parsers and other Express middleware carry a status.
-    const status = statusOf(err);
-    if (status !== undefined && status < 500) {
+    if (status < 500) {
       res.status(status).json(errorBody(status, (err as Error).message));
       return;
     }
 
-    createLogger(sink, req.id).error(`Unhandled error in ${req.method} ${req.path}`, { err });
     res.status(500).json(errorBody(500));
   };
 }

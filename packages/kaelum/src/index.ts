@@ -10,8 +10,11 @@ export type {
   CsrfConfig,
   HealthOptions,
   KaelumOptions,
+  RedirectTarget,
   RequestIdOptions,
   ShutdownOptions,
+  StaticOptions,
+  ViewsOptions,
 } from "./config.js";
 export { Context } from "./context.js";
 export type { ContextRequest, ContextResponse, Responded } from "./context.js";

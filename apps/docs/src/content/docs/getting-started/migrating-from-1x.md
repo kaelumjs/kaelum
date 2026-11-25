@@ -22,22 +22,24 @@ Kaelum 2.0 replaces the 1.x API. The app is no longer an Express app with method
 | `validate({ body: { name: { type: "string" } } })` | `body: k.object({ name: k.string() })` |
 | `app.healthCheck()` | on by default |
 | `app.requestId()`, `app.timing()` | on by default / `observability.timing` |
-| `app.useErrorHandler()`, `app.notFound()` | built in |
+| `app.useErrorHandler()`, `app.notFound()` | built in; customize with `onError` and `notFound` options |
 | `app.useMethodNotAllowed()` | built in |
 | `app.onShutdown(fn)` | `app.onClose(fn)` |
 | `app.plugin(fn, opts)` | `app.plugin(fn, opts)`, the plugin receives the 2.0 app |
 | `kaelum/test` | `kaelum/testing` |
 | `.env` loaded on import | `node --env-file-if-exists=.env` |
-| `views: { engine: "ejs" }` | `c.html()`, or configure `app.express` (see [Using with Express](/guide/express/#views)) |
-| `static: "public"` | `app.use(serveStatic("public"))` |
+| `views: { engine: "ejs", path }` | `kaelum({ views: true })` + `c.render()`, with `ejs` installed in the project |
+| `static: "public"` (always on) | `kaelum({ static: "public" })` (opt-in) |
+| `res.render(view, data)` | `c.render(view, data)` |
+| `etag`, `usePrettyJson()` | `etag`, `json: { pretty }` options |
+| `useTrimTrailingSlash()` | `trailingSlash: "redirect"` |
+| `app.redirect(map)` | `redirects` option |
+| `port` | `port` option |
 
 ## Removed
 
-These 1.x features have no direct replacement in 2.0:
-
-- **ETag and pretty JSON options**: use Express settings through `app.express` (`etag`, `json spaces`).
-- **Trailing slash redirects and redirect maps**: use `c.redirect()` in a route, or a small middleware.
 - **The middleware manager** (tracking and removing middleware at runtime): middleware is added once, at startup.
+- **Changing the configuration at runtime** (`setConfig` after start, `removeStatic`): options are set once, when the app is created.
 
 ## A route, before and after
 

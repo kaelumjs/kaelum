@@ -64,4 +64,27 @@ Anything else thrown, or a rejected promise, becomes a `500` with a generic mess
 
 The real error never reaches the client, so stack traces and database messages do not leak. It goes to the [logger](/guide/observability/#logger) with the request ID, so you can find it from the `X-Request-Id` the client got.
 
+## Custom error responses
+
+`onError` runs for every error that reaches Kaelum (thrown errors, 404s, validation failures) before the default response:
+
+```ts
+const app = kaelum({
+  onError: (err, c) => {
+    reportToSentry(err);
+
+    // HTML pages for browsers, the default JSON for everything else.
+    if (c.req.header("accept")?.includes("text/html")) return c.render("error");
+  },
+});
+```
+
+- Return a value, or use `c.*`, to replace the response. It keeps the error's status unless you pass another.
+- Return nothing to keep the default response.
+- Unexpected errors are logged either way. If `onError` itself throws, that is logged and the default response is sent.
+
+For pages that do not exist, [`notFound`](/guide/pages/#custom-404-page) is usually simpler.
+
+## Errors from Express middleware
+
 Errors from Express middleware that carry a 4xx `status`, such as a malformed JSON body or a body over the size limit, keep their status and message.

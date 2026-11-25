@@ -35,10 +35,13 @@ return c.created(user);               // 201 + JSON
 return c.noContent();                 // 204
 return c.json(data, 202);             // any status
 return c.html("<h1>Hi</h1>");         // text/html
+return c.render("home", { user });     // a view, see Pages and views
 return c.text("plain", 200);
 return c.redirect("/login");          // 302 by default
 return c.notFound("User not found");  // 404 + standard error body
 ```
+
+`c.json`, `c.text`, `c.html` and `c.render` take an optional status. Without one they keep the current status: 200 in a route, 404 in `notFound`, the error's status in `onError`.
 
 A helper sends the response right away. Returning its result tells Kaelum there is nothing left to send, which keeps the handler's return type honest in TypeScript.
 

@@ -2,7 +2,7 @@
 title: Security
 description: Security headers, CORS, rate limiting, CSRF and IP restriction.
 sidebar:
-  order: 7
+  order: 9
 ---
 
 Security headers and a body size limit are on from the start. The rest is one option away, and every rejection answers in the [standard error format](/guide/errors/).

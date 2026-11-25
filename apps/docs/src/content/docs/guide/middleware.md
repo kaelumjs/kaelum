@@ -2,7 +2,7 @@
 title: Middleware
 description: Adding Express middleware to the whole app, a path prefix, a subtree or one endpoint.
 sidebar:
-  order: 5
+  order: 7
 ---
 
 Middleware in Kaelum is plain Express middleware, `(req, res, next) => void`. Anything from the Express ecosystem works.
@@ -62,12 +62,15 @@ Kaelum installs its own middleware before anything you add, in this order:
 3. Server-Timing (off by default)
 4. security headers (Helmet)
 5. CORS (off by default)
-6. IP restriction (off by default)
-7. rate limit (off by default)
-8. CSRF (off by default)
-9. body parsers
+6. trailing slash and redirects (off by default)
+7. pretty JSON on `?pretty` (off by default)
+8. IP restriction (off by default)
+9. rate limit (off by default)
+10. CSRF (off by default)
+11. static files (off by default)
+12. body parsers
 
-Checks that can reject a request cheaply come before the body is read. All of these are configured through the [options](/guide/configuration/).
+Redirects answer before anything else has to run, and checks that can reject a request cheaply come before the body is read. All of these are configured through the [options](/guide/configuration/).
 
 ## Middleware factories
 

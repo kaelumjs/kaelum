@@ -2,7 +2,7 @@
 title: Testing
 description: Test a Kaelum app with real HTTP requests, without starting it.
 sidebar:
-  order: 9
+  order: 11
 ---
 
 `kaelum/testing` sends real HTTP requests to an app without calling `app.start()`. It has no dependencies and works with any test runner.
