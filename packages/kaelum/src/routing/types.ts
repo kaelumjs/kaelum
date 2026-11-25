@@ -145,12 +145,6 @@ type SingleShape<V, K, P extends string> = [K] extends [never] ? SingleEndpoint<
  */
 export type SingleEndpoint<T, P extends string> = { [K in keyof T]: T[K] & SingleShape<T[K], K, P> };
 
-/** A route tree bound to its full path, created by `defineRoutes`. */
-export interface DefinedRoutes<P extends string = string> {
-  readonly path: P;
-  readonly tree: Record<string, unknown>;
-}
-
 /** One registered endpoint, as listed by `app.routes()`. */
 export interface RouteInfo {
   method: Uppercase<Method>;

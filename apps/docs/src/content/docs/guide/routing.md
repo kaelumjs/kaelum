@@ -70,18 +70,26 @@ Order for each request: the tree's `use` from the outermost level inward, then t
 
 ## Route trees in their own files
 
-`defineRoutes` declares a tree away from the app. The full path is given up front, so `c.params` is typed inside the file:
+Keep each area in its own file, as a function that receives the app. `c.params` and the schemas are typed as usual:
 
 ```ts title="src/routes/users.ts"
-import { defineRoutes } from "kaelum";
+import type { Kaelum } from "kaelum";
 
-export const userRoutes = defineRoutes("/orgs/:orgId/users")({
-  get: (c) => db.users.list(c.params.orgId),
-});
+export default function userRoutes(app: Kaelum) {
+  app.route("/orgs/:orgId/users", {
+    get: (c) => db.users.list(c.params.orgId),
+  });
+}
 ```
 
 ```ts title="src/app.ts"
-app.route(userRoutes);
+import kaelum from "kaelum";
+import userRoutes from "./routes/users.ts";
+
+const app = kaelum();
+userRoutes(app);
+
+app.start();
 ```
 
 ## Resources

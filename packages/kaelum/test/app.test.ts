@@ -1,6 +1,6 @@
 import express from "express";
 import request from "supertest";
-import { kaelum, defineRoutes, HttpError, Kaelum } from "../src/index.js";
+import { kaelum, HttpError, Kaelum } from "../src/index.js";
 
 describe("Kaelum app", () => {
   let app: Kaelum;
@@ -56,12 +56,13 @@ describe("Kaelum app", () => {
       expect(app.routes().map((r) => r.path)).toEqual(["/api/users", "/health"]);
     });
 
-    test("accepts routes declared with defineRoutes", async () => {
-      const userRoutes = defineRoutes("/orgs/:orgId/users")({
-        get: (c) => ({ org: c.params.orgId }),
-      });
+    test("routes in their own module: a function that receives the app", async () => {
+      const userRoutes = (target: Kaelum) =>
+        target.route("/orgs/:orgId/users", {
+          get: (c) => ({ org: c.params.orgId }),
+        });
 
-      app.route(userRoutes);
+      userRoutes(app);
 
       const res = await request(app.express).get("/orgs/acme/users");
       expect(res.body).toEqual({ org: "acme" });

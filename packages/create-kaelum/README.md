@@ -24,7 +24,7 @@ pnpm create kaelum@next my-site --template web
 | `js-api` | JavaScript REST API |
 | `js-web` | JavaScript web app |
 
-`api` and `web` pick the TypeScript version. Every template ships with example tests.
+`api` and `web` pick the TypeScript version. The web templates render EJS views; only they install `ejs`.
 
 ## Options
 

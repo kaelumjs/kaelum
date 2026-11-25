@@ -5,15 +5,16 @@ sidebar:
   order: 11
 ---
 
-`kaelum/testing` sends real HTTP requests to an app without calling `app.start()`. It has no dependencies and works with any test runner.
+`kaelum/testing` sends real HTTP requests to an app without opening a port of its own. It has no dependencies and works with any test runner.
 
-```ts
+Point it at your app file. Its `app.start()` does not listen while `testApp` loads it, so the app file needs no changes:
+
+```ts title="test/users.test.ts"
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
 import { testApp } from "kaelum/testing";
-import { createApp } from "./app.ts";
 
-const client = testApp(createApp());
+const client = await testApp(() => import("../src/app.ts"));
 after(() => client.close());
 
 test("creates a user", async () => {
@@ -31,7 +32,9 @@ test("rejects an invalid body", async () => {
 });
 ```
 
-The app is served on a random local port, opened on the first request. Call `close()` when the tests are done.
+Run it with `node --test`, or use the same client with Vitest or Jest.
+
+An app built in the test itself works too: `testApp(app)`.
 
 ## Requests
 
@@ -56,6 +59,5 @@ Redirects are not followed, so they can be asserted on.
 
 ## Tips
 
-- Build the app in a function (`createApp()`) and start it in a separate file. Tests and the server then use the same app.
 - Request logs are off when `NODE_ENV` is `test`. The templates set it at the top of the test file.
-- Graceful shutdown hooks only install on `app.start()`, so tests do not touch process signals.
+- An app loaded by `testApp(() => import(...))` installs no signal handlers and opens no port until the first request.

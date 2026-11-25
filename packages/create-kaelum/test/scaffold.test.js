@@ -31,10 +31,10 @@ function tempDir(t) {
 const readPkg = (dir) => JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
 
 const templates = {
-  "ts-api": ["src/app.ts", "src/server.ts", "src/app.test.ts", "src/routes/users.ts", "tsconfig.json", "tsconfig.build.json"],
-  "ts-web": ["src/app.ts", "src/server.ts", "src/app.test.ts", "src/routes/pages.ts", "tsconfig.json", "views/index.html"],
-  "js-api": ["src/app.js", "src/server.js", "src/app.test.js", "src/routes/users.js"],
-  "js-web": ["src/app.js", "src/server.js", "src/app.test.js", "src/routes/pages.js", "views/index.html", "public/style.css"],
+  "ts-api": ["src/app.ts", "src/routes/users.ts", "src/middlewares/auth.ts", "tsconfig.json"],
+  "ts-web": ["src/app.ts", "src/routes/pages.ts", "views/index.ejs", "views/partials/header.ejs", "public/style.css", "tsconfig.json"],
+  "js-api": ["src/app.js", "src/routes/users.js", "src/middlewares/auth.js"],
+  "js-web": ["src/app.js", "src/routes/pages.js", "views/index.ejs", "views/partials/header.ejs", "public/style.css"],
 };
 
 for (const [template, files] of Object.entries(templates)) {
@@ -52,6 +52,9 @@ for (const [template, files] of Object.entries(templates)) {
     assert.equal(pkg.name, "my-app");
     assert.equal(pkg.type, "module");
     assert.equal(pkg.dependencies.kaelum, `^${version}`, "depends on the matching kaelum release");
+    assert.equal("ejs" in pkg.dependencies, template.endsWith("web"), "only the web templates use ejs");
+    const sources = fs.readdirSync(path.join(project, "src"), { recursive: true }).map(String);
+    assert.ok(!sources.some((file) => /test|server/.test(file)), `one app file, no tests: ${sources}`);
     assert.ok(!fs.existsSync(path.join(project, "node_modules")), "nothing is installed");
   });
 }
@@ -117,6 +120,7 @@ test("next steps use the package manager that ran the command", (t) => {
   const pnpm = run(["p", "--no-install"], cwd, { npm_config_user_agent: "pnpm/10.0.0 npm/? node/v24.22.1" });
   assert.match(pnpm.out, /pnpm install/);
   assert.match(pnpm.out, /pnpm dev/);
+  assert.match(pnpm.out, /pnpm build/);
 
   const bun = run(["b", "--no-install", "--pm", "bun"], cwd);
   assert.match(bun.out, /bun dev/);
@@ -133,11 +137,11 @@ test("AGENTS.md uses the project's package manager", (t) => {
   const pnpm = fs.readFileSync(path.join(cwd, "p", "AGENTS.md"), "utf8");
   assert.match(pnpm, /`pnpm dev`/);
   assert.match(pnpm, /`pnpm typecheck`/);
-  assert.doesNotMatch(pnpm, /`npm (run |test|start)/);
+  assert.doesNotMatch(pnpm, /`npm (run |start)/);
 
   const npm = fs.readFileSync(path.join(cwd, "n", "AGENTS.md"), "utf8");
   assert.match(npm, /`npm run dev`/);
-  assert.match(npm, /`npm test`/);
+  assert.match(npm, /`npm start`/);
 });
 
 test("prints the version", () => {

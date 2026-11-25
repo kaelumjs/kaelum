@@ -112,3 +112,32 @@ describe("default log sink", () => {
     expect(second.err.stack).toContain("boom");
   });
 });
+
+describe("testApp(() => import(...))", () => {
+  test("loads an app file that calls start(), without listening", async () => {
+    const client = await testApp(() => import("./fixtures/apps/starts.js"));
+    const { server } = await import("./fixtures/apps/starts.js");
+
+    expect(server.listening).toBe(false);
+    expect((await client.get("/hello")).body).toEqual({ from: "starts.ts" });
+    await client.close();
+  });
+
+  test("an already loaded file gives the same app again", async () => {
+    const client = await testApp(() => import("./fixtures/apps/starts.js"));
+    expect((await client.get("/hello")).body).toEqual({ from: "starts.ts" });
+    await client.close();
+  });
+
+  test("a file that exports the app as default works too", async () => {
+    const client = await testApp(() => import("./fixtures/apps/exports.js"));
+    expect((await client.get("/hello")).body).toEqual({ from: "exports.ts" });
+    await client.close();
+  });
+
+  test("a file with no app is an error", async () => {
+    await expect(testApp(() => import("./fixtures/apps/empty.js"))).rejects.toThrow(
+      /neither called app\.start\(\) nor exported a Kaelum app/
+    );
+  });
+});

@@ -5,9 +5,8 @@
   "description": "Kaelum REST API",
   "type": "module",
   "scripts": {
-    "dev": "node --watch --env-file-if-exists=.env src/server.js",
-    "start": "node --env-file-if-exists=.env src/server.js",
-    "test": "node --test"
+    "dev": "node --watch --env-file-if-exists=.env src/app.js",
+    "start": "node --env-file-if-exists=.env src/app.js"
   },
   "engines": {
     "node": ">=24.22.1"

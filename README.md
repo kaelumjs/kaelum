@@ -97,7 +97,7 @@ Testing, without starting the server:
 ```ts
 import { testApp } from "kaelum/testing";
 
-const client = testApp(app);
+const client = await testApp(() => import("./src/app.ts"));
 const res = await client.post("/users", { name: "Ada", email: "ada@example.com" });
 expect(res.status).toBe(201);
 await client.close();

@@ -181,7 +181,9 @@ async function createProject(given, { interactive }) {
 
     const commands = [
       [runScript(options.pm, "dev"), "start with file watching"],
-      [runScript(options.pm, "test"), "run the tests"],
+      options.language === "ts"
+        ? [runScript(options.pm, "build"), "compile for production"]
+        : [runScript(options.pm, "start"), "start without watching"],
     ];
     const width = Math.max(...commands.map(([cmd]) => cmd.length)) + 3;
     const steps = [

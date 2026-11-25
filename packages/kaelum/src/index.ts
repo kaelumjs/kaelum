@@ -2,7 +2,7 @@ import { kaelum } from "./app.js";
 
 export default kaelum;
 
-export { Kaelum, defineRoutes, kaelum } from "./app.js";
+export { Kaelum, kaelum } from "./app.js";
 export type { CloseHook, Plugin } from "./app.js";
 export type {
   BodyOptions,
@@ -37,7 +37,6 @@ export type { Infer, KSchema } from "./schema/k.js";
 export type { InferOutput, StandardSchemaV1 } from "./schema/standard.js";
 export type { ValidationIssue, ValidationSource } from "./schema/validate.js";
 export type {
-  DefinedRoutes,
   EndpointObject,
   Handler,
   Method,
