@@ -2,7 +2,7 @@
 title: Recipes
 description: Short, complete solutions to common tasks, such as authentication, pagination, a readiness check and a single-page app backend.
 sidebar:
-  order: 12
+  order: 14
 ---
 
 Each recipe uses only Kaelum and the Node standard library, unless it says otherwise.

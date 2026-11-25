@@ -116,22 +116,51 @@ export class Context<
 
   // --- responses ----------------------------------------------------------
 
-  /** Send JSON. */
-  json(data: unknown, status = 200): Responded {
-    this.res.raw.status(status).json(data);
+  /**
+   * Send JSON. Without a status, keeps the current one: 200 in a handler,
+   * 404 in `notFound`, the error status in `onError`.
+   *
+   * @example
+   * return c.json({ queued: true }, 202);
+   */
+  json(data: unknown, status?: number): Responded {
+    this.res.raw.status(status ?? this.res.raw.statusCode).json(data);
     return RESPONDED;
   }
 
-  /** Send plain text. */
-  text(text: string, status = 200): Responded {
-    this.res.raw.status(status).type("text/plain").send(text);
+  /** Send plain text. Without a status, keeps the current one (200 in a handler). */
+  text(text: string, status?: number): Responded {
+    this.res.raw.status(status ?? this.res.raw.statusCode).type("text/plain").send(text);
     return RESPONDED;
   }
 
-  /** Send HTML. */
-  html(html: string, status = 200): Responded {
-    this.res.raw.status(status).type("text/html").send(html);
+  /** Send HTML. Without a status, keeps the current one (200 in a handler). */
+  html(html: string, status?: number): Responded {
+    this.res.raw.status(status ?? this.res.raw.statusCode).type("text/html").send(html);
     return RESPONDED;
+  }
+
+  /**
+   * Render a view and send it as HTML. Needs `views` in the options.
+   * `res.locals` (set by middleware) is available to the view too.
+   *
+   * @param view - template name, relative to the views folder, without extension
+   * @param data - values for the template
+   * @param status - default: the current status (200 in a handler)
+   *
+   * @example
+   * app.get("/", (c) => c.render("home", { user: c.res.raw.locals.user }));
+   */
+  render(view: string, data: Record<string, unknown> = {}, status?: number): Promise<Responded> {
+    const res = this.res.raw;
+    if (!res.app.get("view engine")) {
+      return Promise.reject(new Error("c.render needs views: kaelum({ views: true })"));
+    }
+    return new Promise((resolve, reject) => {
+      res.render(view, data, (err: Error | null, html: string) =>
+        err ? reject(err) : resolve(this.html(html, status))
+      );
+    });
   }
 
   /** Redirect to another URL. */

@@ -2,7 +2,7 @@
 title: Configuration
 description: Every option of kaelum(), with its default.
 sidebar:
-  order: 6
+  order: 8
 ---
 
 All configuration goes to `kaelum()`, once:
@@ -33,6 +33,13 @@ With no options, Kaelum starts with production defaults. Each option turns a def
 | IP restriction | off | `security.ipRestriction` |
 | Server-Timing | off | `observability.timing` |
 | Trust proxy headers | off | `trustProxy` |
+| `ETag` header (weak) | **on** | `etag` |
+| Static files | off | `static` |
+| Views | off | `views` |
+| Pretty JSON | off | `json.pretty` |
+| Trailing slash redirect | off | `trailingSlash` |
+| Redirect map | none | `redirects` |
+| Custom 404 / error responses | none | `notFound`, `onError` |
 
 ## Security
 
@@ -89,6 +96,30 @@ kaelum({ health: false });                              // no health route
 ```
 
 The route answers `{ "status": "ok" }`. With a `check`, a thrown error or a `false` result answers `503` without revealing why.
+
+## Pages
+
+| Option | Type | Default |
+| --- | --- | --- |
+| `static` | `string \| StaticOptions` | off |
+| `views` | `boolean \| { engine?, dir? }` | off. `true`: EJS from `views/` |
+| `trailingSlash` | `false \| "redirect"` | `false` |
+| `redirects` | `Record<string, string \| { to, status? }>` | none |
+| `notFound` | `(c) => unknown` | JSON 404 |
+
+Details and examples: [Pages and views](/guide/pages/).
+
+## Responses
+
+| Option | Default |
+| --- | --- |
+| `etag` | `"weak"`: clients can revalidate and get a `304`. `"strong"` or `false` |
+| `json.pretty` | `false`. `true` indents every JSON response; `"query"` only with `?pretty` in the URL |
+| `onError` | none. See [Errors](/guide/errors/#custom-error-responses) |
+
+## Port
+
+`app.start()` listens on, in order: the port passed to it, `PORT` from the environment, the `port` option, then 3000.
 
 ## Shutdown
 

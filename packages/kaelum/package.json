@@ -60,11 +60,20 @@
     "express": "^5.3.0",
     "helmet": "^8.3.0"
   },
+  "peerDependencies": {
+    "ejs": ">=3.1.10"
+  },
+  "peerDependenciesMeta": {
+    "ejs": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/node": "^24.0.0",
     "@types/supertest": "^7.2.1",
     "@vitest/coverage-v8": "^5.1.0",
+    "ejs": "^7.0.2",
     "supertest": "7.2.2",
     "typescript": "^5.9.3",
     "vitest": "^5.1.0",

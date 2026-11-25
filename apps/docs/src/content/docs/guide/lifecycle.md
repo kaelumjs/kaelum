@@ -2,7 +2,7 @@
 title: Lifecycle and plugins
 description: Starting and stopping the app, graceful shutdown, onClose hooks and plugins.
 sidebar:
-  order: 10
+  order: 12
 ---
 
 ## Starting

@@ -2,7 +2,7 @@
 title: Observability
 description: Request IDs, request logs, the logger, Server-Timing and the health check.
 sidebar:
-  order: 8
+  order: 10
 ---
 
 ## Request IDs

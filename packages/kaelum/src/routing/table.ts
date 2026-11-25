@@ -136,7 +136,7 @@ async function runHandler(
 }
 
 /** Turn whatever a handler returned into a response, unless one was already sent. */
-function sendResult(result: unknown, res: Response): void {
+export function sendResult(result: unknown, res: Response): void {
   if (result === RESPONDED || res.headersSent) return;
 
   if (result === undefined) {
