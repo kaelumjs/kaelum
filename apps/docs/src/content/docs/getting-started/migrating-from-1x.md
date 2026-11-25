@@ -27,7 +27,7 @@ Kaelum 2.0 replaces the 1.x API. The app is no longer an Express app with method
 | `app.onShutdown(fn)` | `app.onClose(fn)` |
 | `app.plugin(fn, opts)` | `app.plugin(fn, opts)`, the plugin receives the 2.0 app |
 | `kaelum/test` | `kaelum/testing` |
-| `.env` loaded on import | `node --env-file-if-exists=.env` |
+| `.env` loaded on import | still loaded on import; `KAELUM_ENV_FILES=false` turns it off |
 | `views: { engine: "ejs", path }` | `kaelum({ views: true })` + `c.render()`, with `ejs` installed in the project |
 | `static: "public"` (always on) | `kaelum({ static: "public" })` (opt-in) |
 | `res.render(view, data)` | `c.render(view, data)` |

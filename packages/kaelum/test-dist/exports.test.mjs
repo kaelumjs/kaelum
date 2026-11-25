@@ -52,3 +52,31 @@ test("subpath: kaelum/testing drives an app", async () => {
   assert.equal(res.status, 200);
   assert.deepEqual(res.body, { id: "7" });
 });
+
+test("importing kaelum loads the project's .env, unless KAELUM_ENV_FILES=false", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const fs = await import("node:fs");
+  const os = await import("node:os");
+  const path = await import("node:path");
+
+  const entry = import.meta.resolve("kaelum");
+  const script = `await import(${JSON.stringify(entry)}); console.log(process.env.KAELUM_TEST_IMPORT ?? "unset")`;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "kaelum-env-"));
+  const env = { ...process.env };
+  delete env.KAELUM_TEST_IMPORT;
+  const run = (extra = {}) =>
+    execFileSync(process.execPath, ["--input-type=module", "-e", script], {
+      cwd: dir,
+      encoding: "utf8",
+      env: { ...env, ...extra },
+    }).trim();
+
+  try {
+    fs.writeFileSync(path.join(dir, ".env"), "KAELUM_TEST_IMPORT=from-dotenv\n");
+    assert.equal(run(), "from-dotenv");
+    assert.equal(run({ KAELUM_ENV_FILES: "false" }), "unset");
+    assert.equal(run({ KAELUM_TEST_IMPORT: "from-shell" }), "from-shell");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

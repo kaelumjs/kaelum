@@ -50,7 +50,7 @@ npm run dev
 | `npm run build` | TypeScript only: compile to `dist/` |
 | `npm run typecheck` | TypeScript only: check the types |
 
-Environment variables come from `.env`, loaded by Node's `--env-file-if-exists`. The CLI creates one with `PORT=3000`.
+Environment variables come from `.env`, loaded automatically. The CLI creates one with `PORT=3000`. See [Configuration](/guide/configuration/#environment-variables).
 
 ## Project layout
 

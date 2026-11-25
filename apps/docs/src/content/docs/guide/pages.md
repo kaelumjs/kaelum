@@ -28,7 +28,7 @@ kaelum({ static: "public" });
 kaelum({ static: { dir: "public", prefix: "/assets", maxAge: "1d", immutable: true } });
 ```
 
-The folder is relative to the project root, the folder the app is started from. Files are served before the routes; a missing file falls through to the routes and, at the end, the 404.
+`public/index.html` is served at `/`, which makes it a natural home page; pages that need data or shared layout are better as views. The folder is relative to the project root, the folder the app is started from. Files are served before the routes; a missing file falls through to the routes and, at the end, the 404.
 
 | Option | Default |
 | --- | --- |

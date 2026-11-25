@@ -1,3 +1,5 @@
+// Loads .env before anything else in the app runs. See load-env.ts.
+import "./load-env.js";
 import { kaelum } from "./app.js";
 
 export default kaelum;

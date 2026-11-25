@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kaelum</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <a class="brand" href="/">Kaelum</a>
+      <nav>
+        <a href="/about">About</a>
+        <a href="/dashboard">Dashboard</a>
+      </nav>
+    </header>
+    <main class="container">
+      <h1>Welcome</h1>
+      <p class="subtitle">Express, production-ready by default.</p>
+
+      <div class="cards">
+        <div class="card">
+          <h3>Static pages</h3>
+          <p>This page is <code>public/index.html</code>, served as is.</p>
+        </div>
+        <div class="card">
+          <h3>Views</h3>
+          <p>Pages with data are EJS views in <code>views/</code>, rendered by <code>src/routes/pages</code>.</p>
+        </div>
+        <div class="card">
+          <h3>Secure defaults</h3>
+          <p>Security headers, request IDs, logs and a <a href="/health">health check</a> are already on.</p>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

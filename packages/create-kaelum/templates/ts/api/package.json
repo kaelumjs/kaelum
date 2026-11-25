@@ -5,9 +5,9 @@
   "description": "Kaelum TypeScript REST API",
   "type": "module",
   "scripts": {
-    "dev": "node --watch --env-file-if-exists=.env src/app.ts",
+    "dev": "node --watch src/app.ts",
     "build": "tsc",
-    "start": "node --env-file-if-exists=.env dist/app.js",
+    "start": "node dist/app.js",
     "typecheck": "tsc --noEmit"
   },
   "engines": {

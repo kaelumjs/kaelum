@@ -9,7 +9,7 @@ Kaelum docs, written for agents: https://kaelumjs.matthcodes.dev/llms.txt (every
 - `npm run dev`: start with file watching
 - `npm start`: start the server
 
-Environment variables go in `.env`, loaded by the scripts.
+Environment variables go in `.env` (and `.env.<NODE_ENV>`), loaded when the app imports kaelum. Variables already set in the environment win.
 
 ## Layout
 
