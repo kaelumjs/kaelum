@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.0-alpha.3](https://github.com/kaelumjs/kaelum/compare/create-kaelum-v2.0.0-alpha.2...create-kaelum-v2.0.0-alpha.3) (2026-11-25)
+
+
+### Features
+
+* **create-kaelum:** rewrite the CLI with @clack/prompts and detect the package manager ([33f39fd](https://github.com/kaelumjs/kaelum/commit/33f39fd817a94e627e6dec33d44a406a99931ea3))
+* **create-kaelum:** rewrite the CLI with @clack/prompts and detect the package manager ([#98](https://github.com/kaelumjs/kaelum/issues/98)) ([0b0d60f](https://github.com/kaelumjs/kaelum/commit/0b0d60fa0ee00729ce77c64ab8cd85f71ce46ead))
+
 ## [2.0.0-alpha.2](https://github.com/kaelumjs/kaelum/compare/create-kaelum-v2.0.0-alpha.1...create-kaelum-v2.0.0-alpha.2) (2026-11-18)
 
 
