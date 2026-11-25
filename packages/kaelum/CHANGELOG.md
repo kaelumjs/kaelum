@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.0.0-alpha.3](https://github.com/kaelumjs/kaelum/compare/kaelum-v2.0.0-alpha.2...kaelum-v2.0.0-alpha.3) (2026-11-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* `defineRoutes` is removed; put routes in a function that receives the app and calls `app.route`. `app.route` takes only `(path, tree)`.
+* single-file templates, testApp from the app file, remove defineRoutes
+
+### Features
+
+* add static, views, port, etag, pretty JSON, redirects, notFound and onError options ([975c7ec](https://github.com/kaelumjs/kaelum/commit/975c7ec4994feb3fad4b8c9645342cf8fe7b2a60))
+* add static, views, port, etag, pretty JSON, redirects, notFound and onError options ([#104](https://github.com/kaelumjs/kaelum/issues/104)) ([63ebfcd](https://github.com/kaelumjs/kaelum/commit/63ebfcdff86e00cdd4d1af163d5806bf4183a816))
+* load .env when kaelum is imported and use a static home page in the web templates ([94b4f42](https://github.com/kaelumjs/kaelum/commit/94b4f422b46d855d288e2ccc95dcb691c34a7f51))
+* load .env when kaelum is imported and use a static home page in the web templates ([#106](https://github.com/kaelumjs/kaelum/issues/106)) ([8db1c17](https://github.com/kaelumjs/kaelum/commit/8db1c17427687f980611842413bc409f2238d6f2))
+* single-file templates, testApp from the app file, remove defineRoutes ([8eaf6d2](https://github.com/kaelumjs/kaelum/commit/8eaf6d2a074245c3603cd56a3319651d6217e41d))
+* single-file templates, testApp from the app file, remove defineRoutes ([#105](https://github.com/kaelumjs/kaelum/issues/105)) ([67bf49c](https://github.com/kaelumjs/kaelum/commit/67bf49c582c24b1dcd0641c47743679847912b4f))
+
 ## [2.0.0-alpha.2](https://github.com/kaelumjs/kaelum/compare/kaelum-v2.0.0-alpha.1...kaelum-v2.0.0-alpha.2) (2026-11-18)
 
 
