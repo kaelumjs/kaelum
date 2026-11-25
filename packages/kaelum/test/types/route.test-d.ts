@@ -1,7 +1,7 @@
 // Type-level tests for the route tree. Checked by `pnpm typecheck`, never run.
 // Every `@ts-expect-error` below is a mistake that must stay a compile error.
 import { expectTypeOf } from "vitest";
-import { kaelum, defineRoutes, type Context, type Middleware, type ParamsOf } from "../../src/index.js";
+import { kaelum, k, type Context, type Kaelum, type Middleware, type ParamsOf } from "../../src/index.js";
 
 const app = kaelum();
 declare const auth: Middleware;
@@ -59,14 +59,34 @@ app.route("/orgs/:orgId", {
   },
 });
 
-// --- defineRoutes types params from the full path ---------------------------
-const userRoutes = defineRoutes("/orgs/:orgId/users/:userId")({
-  get: (c) => {
-    expectTypeOf(c.params).toEqualTypeOf<{ orgId: string; userId: string }>();
-    return c.params.userId;
+// --- routes in their own module: a function that receives the app ---------
+export default function userRoutes(target: Kaelum) {
+  target.route("/orgs/:orgId/users/:userId", {
+    get: (c) => {
+      expectTypeOf(c.params).toEqualTypeOf<{ orgId: string; userId: string }>();
+      return c.params.userId;
+    },
+  });
+}
+
+// --- an endpoint object with a schema next to a nested path with handlers ---
+// (regression: an overload on app.route made c lose its type in this shape)
+app.route("/accounts", {
+  get: () => [],
+  post: {
+    body: k.object({ name: k.string() }),
+    handler: (c) => {
+      expectTypeOf(c.body).toEqualTypeOf<{ name: string }>();
+      return c.created(c.body);
+    },
+  },
+  "/:id": {
+    get: (c) => {
+      expectTypeOf(c.params).toEqualTypeOf<{ id: string }>();
+      return c.params.id;
+    },
   },
 });
-app.route(userRoutes);
 
 // --- mistakes that must not compile -----------------------------------------
 app.route("/users", {

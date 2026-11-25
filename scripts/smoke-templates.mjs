@@ -85,17 +85,36 @@ async function check(template, tarball, port) {
   log(`${template}: install`);
   sh("npm install --no-audit --no-fund --loglevel=error", dir);
 
-  log(`${template}: test`);
-  sh("npm test", dir);
-
   if (template.startsWith("ts")) {
     log(`${template}: typecheck and build`);
     sh("npm run typecheck", dir);
     sh("npm run build", dir);
   }
 
+  // The templates ship no tests; write the one AGENTS.md suggests, to check
+  // that testApp loads the app file without starting a server.
+  log(`${template}: testApp`);
+  const ext = template.startsWith("ts") ? "ts" : "js";
+  const probe = template.endsWith("api") ? "/users" : "/about";
+  fs.mkdirSync(path.join(dir, "test"));
+  fs.writeFileSync(
+    path.join(dir, "test", `app.test.${ext}`),
+    `import { test } from "node:test";
+import assert from "node:assert/strict";
+import { testApp } from "kaelum/testing";
+
+test("the app answers", async () => {
+  const client = await testApp(() => import("../src/app.${ext}"));
+  const res = await client.get("${probe}");
+  await client.close();
+  assert.equal(res.status, 200);
+});
+`
+  );
+  sh(`node --test test/app.test.${ext}`, dir);
+
   log(`${template}: start`);
-  await startAndProbe(dir, port, template.endsWith("api") ? ["/users", "/users/1"] : ["/", "/style.css", "/dashboard"]);
+  await startAndProbe(dir, port, template.endsWith("api") ? ["/users", "/users/1"] : ["/", "/about", "/style.css", "/dashboard"]);
 }
 
 const failed = [];

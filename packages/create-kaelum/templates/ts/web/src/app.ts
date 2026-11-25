@@ -1,13 +1,13 @@
-import { fileURLToPath } from "node:url";
-import kaelum, { serveStatic } from "kaelum";
-import { pageRoutes } from "./routes/pages.ts";
+import kaelum from "kaelum";
+import pages from "./routes/pages.ts";
 
-/** Build the app without starting it, so tests can use it too. */
-export function createApp() {
-  const app = kaelum();
+const app = kaelum({
+  static: "public",
+  views: true,
+  trailingSlash: "redirect",
+  notFound: (c) => c.render("404", { title: "Page not found" }),
+});
 
-  app.use(serveStatic(fileURLToPath(new URL("../public", import.meta.url))));
-  app.route(pageRoutes);
+pages(app);
 
-  return app;
-}
+app.start();

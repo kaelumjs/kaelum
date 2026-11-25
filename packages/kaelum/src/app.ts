@@ -1,4 +1,4 @@
-import type { Server } from "node:http";
+import { createServer, type Server } from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
 import cors from "cors";
@@ -17,9 +17,9 @@ import { serveStatic } from "./middleware/static.js";
 import { serverTiming } from "./middleware/timing.js";
 import { prettyJsonOnQuery, redirectMap, trailingSlashRedirect } from "./middleware/urls.js";
 import { RouteTable, sendResult } from "./routing/table.js";
+import { testingState } from "./testing-state.js";
 import { flattenTree } from "./routing/tree.js";
 import type {
-  DefinedRoutes,
   Method,
   Middleware,
   ResourceActions,
@@ -125,23 +125,33 @@ export class Kaelum {
   }
 
   /**
-   * Register a tree of routes.
+   * Register a tree of routes: methods are endpoints, keys starting with `/`
+   * are nested paths, and `use` is middleware for a level and everything below.
+   * `c.params`, `c.body` and `c.query` are typed from the paths and schemas.
    *
    * @example
    * app.route("/users", {
    *   get: () => listUsers(),
+   *   post: { body: NewUser, handler: (c) => c.created(createUser(c.body)) },
    *   "/:id": {
    *     use: [auth],
    *     get: (c) => findUser(c.params.id),
    *   },
    * });
+   *
+   * @example
+   * // Routes in their own file: export a function that receives the app.
+   * export default function userRoutes(app: Kaelum) {
+   *   app.route("/users", { get: () => listUsers() });
+   * }
    */
-  route<const P extends string, T>(path: P, tree: RouteTree<T, P>): this;
-  route(routes: DefinedRoutes): this;
-  route(pathOrRoutes: string | DefinedRoutes, tree?: unknown): this {
-    const [path, routes] =
-      typeof pathOrRoutes === "string" ? [pathOrRoutes, tree] : [pathOrRoutes.path, pathOrRoutes.tree];
+  // One signature on purpose: an overload here makes TypeScript lose the
+  // type of `c` in trees that mix endpoint objects and nested paths.
+  route<const P extends string, T>(path: P, tree: RouteTree<T, P>): this {
+    return this.#register(path, tree);
+  }
 
+  #register(path: string, routes: unknown): this {
     // Validate the whole tree before registering anything, so a mistake
     // deep in it does not leave half of the routes registered.
     const flat = flattenTree(path, routes);
@@ -216,7 +226,7 @@ export class Kaelum {
       "/:id": Object.keys(item).length > 0 ? item : undefined,
     });
 
-    return this.route({ path, tree });
+    return this.#register(path, tree);
   }
 
   /**
@@ -253,12 +263,24 @@ export class Kaelum {
   }
 
   /**
-   * Start listening. Resolves with the server once it is ready.
+   * Start listening and log the address. Resolves with the server once it is ready.
    * Port: the one passed, then `PORT`, then the `port` option, then 3000.
+   *
+   * While `testApp(() => import("./app.ts"))` loads the app, this does not
+   * listen: the app is handed to the test client instead.
+   *
+   * @example
+   * await app.start();
    */
   start(port: number | string = process.env.PORT ?? this.#port): Promise<Server> {
     if (this.#server) {
       return Promise.reject(new Error("Kaelum: the app is already started"));
+    }
+
+    const testing = testingState();
+    if (testing.loading > 0) {
+      testing.started.push(this);
+      return Promise.resolve(createServer(this.express));
     }
 
     return new Promise((resolve, reject) => {
@@ -266,6 +288,11 @@ export class Kaelum {
       server.once("listening", () => {
         this.#server = server;
         this.#watchSignals();
+        if (process.env.NODE_ENV !== "test") {
+          const address = server.address();
+          const actual = typeof address === "object" && address ? address.port : port;
+          this.log.info(`Kaelum listening on http://localhost:${actual}`);
+        }
         resolve(server);
       });
       server.once("error", reject);
@@ -299,7 +326,7 @@ export class Kaelum {
   }
 
   #single(method: Method, path: string, endpoint: unknown): this {
-    return this.route({ path, tree: { [method]: endpoint } });
+    return this.#register(path, { [method]: endpoint });
   }
 
   #watchSignals(): void {
@@ -403,24 +430,6 @@ function healthHandler(check: (() => unknown) | undefined) {
     }
     return { status: "ok" };
   };
-}
-
-/**
- * Declare a route tree away from the app, for example in its own file.
- * The full path is given up front so `c.params` is typed.
- *
- * @example
- * export const userRoutes = defineRoutes("/orgs/:orgId/users")({
- *   get: (c) => listUsers(c.params.orgId),
- * });
- *
- * app.route(userRoutes);
- */
-export function defineRoutes<const P extends string>(path: P) {
-  return <T>(tree: RouteTree<T, P>): DefinedRoutes<P> => ({
-    path,
-    tree: tree as Record<string, unknown>,
-  });
 }
 
 /**

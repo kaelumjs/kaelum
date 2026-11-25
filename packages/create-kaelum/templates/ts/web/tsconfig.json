@@ -12,10 +12,10 @@
     "noUncheckedIndexedAccess": true,
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
-    "allowImportingTsExtensions": true,
     "rewriteRelativeImportExtensions": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "rootDir": "src",
+    "outDir": "dist"
   },
   "include": [
     "src"

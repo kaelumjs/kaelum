@@ -46,9 +46,9 @@ npm run dev
 | Script | What it does |
 | --- | --- |
 | `npm run dev` | start with file watching |
-| `npm test` | run the tests with `node --test` |
 | `npm start` | start the server (TypeScript: the compiled `dist/`) |
 | `npm run build` | TypeScript only: compile to `dist/` |
+| `npm run typecheck` | TypeScript only: check the types |
 
 Environment variables come from `.env`, loaded by Node's `--env-file-if-exists`. The CLI creates one with `PORT=3000`.
 
@@ -57,34 +57,31 @@ Environment variables come from `.env`, loaded by Node's `--env-file-if-exists`.
 ```
 my-app/
 ├── src/
-│   ├── app.ts            creates the app and exports createApp()
-│   ├── server.ts         starts it
-│   ├── app.test.ts       example tests
-│   ├── routes/           route trees, one file per area
+│   ├── app.ts            creates the app, registers the routes, starts it
+│   ├── routes/           one file per area
 │   └── middlewares/
+├── views/                web template: EJS views
+├── public/               web template: static files
 ├── .env
 └── package.json
 ```
 
-`app.ts` builds the app without starting it, so the tests can use the same app:
+The whole app fits in `src/app.ts`:
 
 ```ts title="src/app.ts"
 import kaelum from "kaelum";
-import { userRoutes } from "./routes/users.ts";
+import users from "./routes/users.ts";
 
-export function createApp() {
-  const app = kaelum({ security: { cors: true } });
-  app.route(userRoutes);
-  return app;
-}
+const app = kaelum({
+  security: { cors: true },
+});
+
+users(app);
+
+app.start();
 ```
 
-```ts title="src/server.ts"
-import { createApp } from "./app.ts";
-
-const app = createApp();
-await app.start(Number(process.env.PORT ?? 3000));
-```
+Each file in `routes/` exports a function that receives the app. See [Routing](/guide/routing/#route-trees-in-their-own-files).
 
 ## Add Kaelum to an existing project
 

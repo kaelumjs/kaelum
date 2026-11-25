@@ -1,5 +1,5 @@
-/** Demo login: marks every visitor as "Admin". Replace with real authentication. */
+/** Demo login: every visitor is "Ada". Views read it as `user`. */
 export const fakeLogin = (_req, res, next) => {
-  res.locals.user = "Admin";
+  res.locals.user = "Ada";
   next();
 };

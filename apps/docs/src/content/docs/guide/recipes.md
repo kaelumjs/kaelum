@@ -29,19 +29,21 @@ export const requireUser: Middleware = async (req, res, next) => {
 ```
 
 ```ts title="src/routes/account.ts"
-import { defineRoutes } from "kaelum";
+import type { Kaelum } from "kaelum";
 import { requireUser } from "../middlewares/auth.ts";
 
-export const accountRoutes = defineRoutes("/account")({
-  use: [requireUser],
-  get: (c) => c.res.raw.locals.user,
-  "/sessions": {
-    delete: async (c) => {
-      await sessions.revokeAll(c.res.raw.locals.user.id);
-      return c.noContent();
+export default function accountRoutes(app: Kaelum) {
+  app.route("/account", {
+    use: [requireUser],
+    get: (c) => c.res.raw.locals.user,
+    "/sessions": {
+      delete: async (c) => {
+        await sessions.revokeAll(c.res.raw.locals.user.id);
+        return c.noContent();
+      },
     },
-  },
-});
+  });
+}
 ```
 
 ## Pagination

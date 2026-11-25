@@ -28,3 +28,22 @@ body {
   border-radius: 0.5rem;
   padding: 0 1rem;
 }
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.nav nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.brand {
+  font-weight: 700;
+  text-decoration: none;
+}
