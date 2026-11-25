@@ -11,18 +11,28 @@ sidebar:
 npm create kaelum@next my-app
 ```
 
-The CLI asks for a language (JavaScript or TypeScript) and a template:
+The CLI asks what you are building, the language and whether to install the dependencies:
 
 - **api**: a REST API with validation and an auth middleware example;
 - **web**: pages, a view and static files.
 
-Skip the questions with `--template`:
+TypeScript is the default. `pnpm create`, `yarn create` and `bun create` work too: the project is installed and its next steps are printed with the same package manager.
+
+Skip the questions with options. With npm, put them after `--`:
 
 ```bash
-npm create kaelum@next my-api -- --template ts-api
+npm create kaelum@next my-api -- --template js-api --no-install
+pnpm create kaelum@next my-site --template web
 ```
 
-Templates: `js-api`, `js-web`, `ts-api`, `ts-web`.
+| Option | |
+| --- | --- |
+| `-t, --template` | `ts-api`, `ts-web`, `js-api`, `js-web`. `api` and `web` pick TypeScript |
+| `--pm` | `npm`, `pnpm`, `yarn` or `bun`. Default: the one running the command |
+| `--install`, `--no-install` | install the dependencies, or not, without asking |
+| `-y, --yes` | defaults for anything not given: TypeScript, api, install |
+
+Without a terminal, in CI or a script, nothing is asked: the defaults apply and the project name is required. Use `.` as the name to create the project in the current folder, if it is empty.
 
 ## Run it
 

@@ -37,6 +37,6 @@
   },
   "homepage": "https://kaelumjs.matthcodes.dev",
   "dependencies": {
-    "inquirer": "12.11.1"
+    "@clack/prompts": "1.9.0"
   }
 }
