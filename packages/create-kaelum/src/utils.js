@@ -44,8 +44,8 @@ async function copyTemplate(sourceDir, targetDir, projectName, kaelumVersion) {
 
     await fs.cp(sourceDir, targetDir, {
       recursive: true,
+      // The caller checks the target is missing or empty; never overwrite a file.
       force: false,
-      errorOnExist: true,
     });
 
     // Try update package.json in the copied template

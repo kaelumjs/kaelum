@@ -1,6 +1,6 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { execFileSync } = require("node:child_process");
+const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -8,8 +8,18 @@ const path = require("node:path");
 const cli = path.resolve(__dirname, "..", "src", "index.js");
 const { version } = require("../package.json");
 
-function run(args, cwd) {
-  return execFileSync(process.execPath, [cli, ...args], { cwd, encoding: "utf8" });
+/** Run the CLI without a terminal, the way CI and scripts do. */
+function run(args, cwd, env = {}) {
+  // Start clean: the package manager running these tests must not leak in.
+  const base = { ...process.env };
+  delete base.npm_config_user_agent;
+  delete base.CI;
+  const result = spawnSync(process.execPath, [cli, ...args], {
+    cwd,
+    encoding: "utf8",
+    env: { ...base, ...env },
+  });
+  return { code: result.status, out: result.stdout + result.stderr };
 }
 
 function tempDir(t) {
@@ -18,50 +28,103 @@ function tempDir(t) {
   return dir;
 }
 
+const readPkg = (dir) => JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+
 const templates = {
-  "js-web": ["src/app.js", "src/server.js", "src/app.test.js", "src/routes/pages.js", "views/index.html", "public/style.css"],
-  "js-api": ["src/app.js", "src/server.js", "src/app.test.js", "src/routes/users.js"],
-  "ts-web": ["src/app.ts", "src/server.ts", "src/app.test.ts", "src/routes/pages.ts", "tsconfig.json", "views/index.html"],
   "ts-api": ["src/app.ts", "src/server.ts", "src/app.test.ts", "src/routes/users.ts", "tsconfig.json", "tsconfig.build.json"],
+  "ts-web": ["src/app.ts", "src/server.ts", "src/app.test.ts", "src/routes/pages.ts", "tsconfig.json", "views/index.html"],
+  "js-api": ["src/app.js", "src/server.js", "src/app.test.js", "src/routes/users.js"],
+  "js-web": ["src/app.js", "src/server.js", "src/app.test.js", "src/routes/pages.js", "views/index.html", "public/style.css"],
 };
 
 for (const [template, files] of Object.entries(templates)) {
-  test(`scaffolds the ${template} template without prompting`, (t) => {
+  test(`scaffolds the ${template} template`, (t) => {
     const cwd = tempDir(t);
-    run(["my-app", "--template", template, "--no-install"], cwd);
+    const { code } = run(["my-app", "--template", template, "--no-install"], cwd);
+    assert.equal(code, 0);
 
     const project = path.join(cwd, "my-app");
     for (const file of [...files, "package.json", ".env", ".gitignore"]) {
       assert.ok(fs.existsSync(path.join(project, file)), `${file} should exist`);
     }
 
-    const pkg = JSON.parse(fs.readFileSync(path.join(project, "package.json"), "utf8"));
+    const pkg = readPkg(project);
     assert.equal(pkg.name, "my-app");
-    assert.equal(pkg.dependencies.kaelum, `^${version}`, "depends on the matching kaelum release");
     assert.equal(pkg.type, "module");
+    assert.equal(pkg.dependencies.kaelum, `^${version}`, "depends on the matching kaelum release");
     assert.ok(!fs.existsSync(path.join(project, "node_modules")), "nothing is installed");
   });
 }
 
-test("accepts the legacy `api` alias", (t) => {
+test("without a terminal, the defaults apply: TypeScript api", (t) => {
   const cwd = tempDir(t);
-  run(["legacy", "-t", "api", "--no-install"], cwd);
-  assert.ok(fs.existsSync(path.join(cwd, "legacy", "src", "routes", "users.js")));
+  const { code } = run(["app", "--no-install"], cwd);
+  assert.equal(code, 0);
+  assert.ok(fs.existsSync(path.join(cwd, "app", "src", "routes", "users.ts")));
 });
 
-test("rejects an unknown template", (t) => {
+test("`api` and `web` pick the TypeScript templates", (t) => {
   const cwd = tempDir(t);
-  assert.throws(() => run(["my-app", "--template", "nope", "--no-install"], cwd), /Unknown template/);
-  assert.ok(!fs.existsSync(path.join(cwd, "my-app")));
+  run(["a", "-t", "api", "--no-install"], cwd);
+  run(["w", "-t", "web", "--no-install"], cwd);
+  assert.ok(fs.existsSync(path.join(cwd, "a", "src", "routes", "users.ts")));
+  assert.ok(fs.existsSync(path.join(cwd, "w", "src", "routes", "pages.ts")));
 });
 
-test("refuses to overwrite an existing folder", (t) => {
+test("the project name is required without a terminal", (t) => {
+  const cwd = tempDir(t);
+  const { code, out } = run(["--no-install"], cwd);
+  assert.equal(code, 1);
+  assert.match(out, /Pass a project name/);
+  assert.deepEqual(fs.readdirSync(cwd), []);
+});
+
+test("a folder name becomes a valid package name", (t) => {
+  const cwd = tempDir(t);
+  const { code } = run(["My Cool App", "--no-install"], cwd);
+  assert.equal(code, 0);
+  assert.equal(readPkg(path.join(cwd, "My Cool App")).name, "my-cool-app");
+});
+
+test("`.` scaffolds into the current folder when it is empty", (t) => {
+  const cwd = tempDir(t);
+  const here = path.join(cwd, "here");
+  fs.mkdirSync(here);
+  const { code } = run([".", "--no-install"], here);
+  assert.equal(code, 0);
+  assert.equal(readPkg(here).name, "here");
+});
+
+test("refuses a folder that is not empty", (t) => {
   const cwd = tempDir(t);
   fs.mkdirSync(path.join(cwd, "taken"));
-  assert.throws(() => run(["taken", "--template", "js-api", "--no-install"], cwd));
-  assert.deepEqual(fs.readdirSync(path.join(cwd, "taken")), []);
+  fs.writeFileSync(path.join(cwd, "taken", "keep.txt"), "mine");
+  const { code, out } = run(["taken", "--no-install"], cwd);
+  assert.equal(code, 1);
+  assert.match(out, /not empty/);
+  assert.deepEqual(fs.readdirSync(path.join(cwd, "taken")), ["keep.txt"]);
+});
+
+test("rejects an unknown template or package manager", (t) => {
+  const cwd = tempDir(t);
+  assert.match(run(["x", "-t", "nope"], cwd).out, /Unknown template/);
+  assert.match(run(["x", "--pm", "npx"], cwd).out, /Unknown package manager/);
+  assert.deepEqual(fs.readdirSync(cwd), []);
+});
+
+test("next steps use the package manager that ran the command", (t) => {
+  const cwd = tempDir(t);
+  const pnpm = run(["p", "--no-install"], cwd, { npm_config_user_agent: "pnpm/10.0.0 npm/? node/v24.22.1" });
+  assert.match(pnpm.out, /pnpm install/);
+  assert.match(pnpm.out, /pnpm dev/);
+
+  const bun = run(["b", "--no-install", "--pm", "bun"], cwd);
+  assert.match(bun.out, /bun dev/);
+
+  const npm = run(["n", "--no-install"], cwd);
+  assert.match(npm.out, /npm run dev/);
 });
 
 test("prints the version", () => {
-  assert.equal(run(["--version"], process.cwd()).trim(), `create-kaelum v${version}`);
+  assert.equal(run(["--version"], process.cwd()).out.trim(), `create-kaelum v${version}`);
 });
