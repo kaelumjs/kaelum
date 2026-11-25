@@ -117,6 +117,21 @@ Details and examples: [Pages and views](/guide/pages/).
 | `json.pretty` | `false`. `true` indents every JSON response; `"query"` only with `?pretty` in the URL |
 | `onError` | none. See [Errors](/guide/errors/#custom-error-responses) |
 
+## Environment variables
+
+Importing `kaelum` loads `.env.<NODE_ENV>` and then `.env` from the project root into `process.env`, before the rest of the app runs:
+
+```bash title=".env"
+PORT=3000
+DATABASE_URL=postgres://localhost/app
+```
+
+- Variables already set in the environment are never overwritten, so real environment variables (in production, in CI) win over both files, and `.env.production` wins over `.env`.
+- Missing files are ignored.
+- `KAELUM_ENV_FILES=false` turns it off, for example when another tool already loads the files.
+
+For `.env` to be loaded before a module reads `process.env`, import `kaelum` first in the entry file, as the templates do.
+
 ## Port
 
 `app.start()` listens on, in order: the port passed to it, `PORT` from the environment, the `port` option, then 3000.

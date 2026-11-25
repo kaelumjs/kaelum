@@ -32,9 +32,9 @@ const readPkg = (dir) => JSON.parse(fs.readFileSync(path.join(dir, "package.json
 
 const templates = {
   "ts-api": ["src/app.ts", "src/routes/users.ts", "src/middlewares/auth.ts", "tsconfig.json"],
-  "ts-web": ["src/app.ts", "src/routes/pages.ts", "views/index.ejs", "views/partials/header.ejs", "public/style.css", "tsconfig.json"],
+  "ts-web": ["src/app.ts", "src/routes/pages.ts", "public/index.html", "views/about.ejs", "views/partials/header.ejs", "public/style.css", "tsconfig.json"],
   "js-api": ["src/app.js", "src/routes/users.js", "src/middlewares/auth.js"],
-  "js-web": ["src/app.js", "src/routes/pages.js", "views/index.ejs", "views/partials/header.ejs", "public/style.css"],
+  "js-web": ["src/app.js", "src/routes/pages.js", "public/index.html", "views/about.ejs", "views/partials/header.ejs", "public/style.css"],
 };
 
 for (const [template, files] of Object.entries(templates)) {

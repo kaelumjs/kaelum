@@ -11,7 +11,7 @@ Kaelum docs, written for agents: https://kaelumjs.matthcodes.dev/llms.txt (every
 - `npm run build`: compile to `dist/`
 - `npm start`: run the compiled app
 
-Environment variables go in `.env`, loaded by the scripts.
+Environment variables go in `.env` (and `.env.<NODE_ENV>`), loaded when the app imports kaelum. Variables already set in the environment win.
 
 ## Layout
 

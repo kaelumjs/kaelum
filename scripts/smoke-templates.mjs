@@ -31,13 +31,21 @@ function packKaelum() {
   return path.join(work, tarball);
 }
 
-/** Start the app, wait for /health, request `paths`, stop it. */
+/**
+ * Start the app, wait for /health, request `paths`, stop it. The port goes
+ * in the project's .env, not the environment, so this also checks that
+ * kaelum loads .env on its own.
+ */
 async function startAndProbe(cwd, port, paths) {
+  fs.writeFileSync(path.join(cwd, ".env"), `PORT=${port}\n`);
+  const env = { ...process.env, NODE_ENV: "production" };
+  delete env.PORT;
+
   const child = spawn(isWindows ? "npm.cmd start" : "npm start", {
     cwd,
     shell: true,
     detached: !isWindows,
-    env: { ...process.env, PORT: String(port), NODE_ENV: "production" },
+    env,
     stdio: ["ignore", "pipe", "pipe"],
   });
   let output = "";

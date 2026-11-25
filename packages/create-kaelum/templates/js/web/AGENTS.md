@@ -9,7 +9,7 @@ Kaelum docs, written for agents: https://kaelumjs.matthcodes.dev/llms.txt (every
 - `npm run dev`: start with file watching
 - `npm start`: start the server
 
-Environment variables go in `.env`, loaded by the scripts.
+Environment variables go in `.env` (and `.env.<NODE_ENV>`), loaded when the app imports kaelum. Variables already set in the environment win.
 
 ## Layout
 
@@ -17,7 +17,7 @@ Environment variables go in `.env`, loaded by the scripts.
 - `src/routes/`: one file per area; each exports a function that receives the app and calls `app.route`
 - `src/middlewares/`: Express middleware
 - `views/`: EJS templates rendered with `c.render()`; shared parts in `views/partials/`
-- `public/`: static files, served by the `static` option
+- `public/`: static files, served by the `static` option; `public/index.html` is the home page
 
 ## Writing routes
 

@@ -5,9 +5,6 @@
     "lib": [
       "ES2023"
     ],
-    "types": [
-      "node"
-    ],
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "erasableSyntaxOnly": true,

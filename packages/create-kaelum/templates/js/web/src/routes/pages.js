@@ -1,17 +1,14 @@
 import { fakeLogin } from "../middlewares/auth.js";
 
+// The home page is public/index.html. These pages render EJS views.
 export default function pages(app) {
-  app.route("/", {
-    get: (c) => c.render("index", { title: "Home" }),
+  app.route("/about", {
+    get: (c) => c.render("about", { title: "About" }),
+  });
 
-    "/about": {
-      get: (c) => c.render("about", { title: "About" }),
-    },
-
-    // `use` applies to this page and every page below it.
-    "/dashboard": {
-      use: [fakeLogin],
-      get: (c) => c.render("dashboard", { title: "Dashboard" }),
-    },
+  // `use` applies to this page and every page below it.
+  app.route("/dashboard", {
+    use: [fakeLogin],
+    get: (c) => c.render("dashboard", { title: "Dashboard" }),
   });
 }
