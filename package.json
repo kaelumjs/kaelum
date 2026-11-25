@@ -12,6 +12,7 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "test:dist": "pnpm -r test:dist",
+    "test:templates": "node scripts/smoke-templates.mjs",
     "test:coverage": "pnpm -r test:coverage",
     "lint": "eslint .",
     "format": "prettier --write .",

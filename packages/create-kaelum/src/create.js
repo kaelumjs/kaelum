@@ -87,6 +87,20 @@ async function resolveOptions(given, interactive) {
   return options;
 }
 
+/** AGENTS.md is written with npm commands; use the project's package manager instead. */
+async function adaptAgentsFile(dir, pm) {
+  if (pm === "npm") return;
+  const file = path.join(dir, "AGENTS.md");
+  let text;
+  try {
+    text = await fs.readFile(file, "utf8");
+  } catch {
+    return;
+  }
+  const adapted = text.replace(/`npm (?:run )?([\w:-]+)`/g, (_, script) => `\`${runScript(pm, script)}\``);
+  await fs.writeFile(file, adapted);
+}
+
 /** The target folder must not exist, or be empty. */
 async function checkTarget(dir) {
   let entries;
@@ -145,6 +159,7 @@ async function createProject(given, { interactive }) {
       kaelumVersion
     );
     if (!result.ok) throw new Error(result.error);
+    await adaptAgentsFile(targetDir, options.pm);
 
     const where = path.relative(process.cwd(), targetDir) || ".";
     prompts.log.success(`Created ${where} from the ${template} template.`);

@@ -44,7 +44,7 @@ for (const [template, files] of Object.entries(templates)) {
     assert.equal(code, 0);
 
     const project = path.join(cwd, "my-app");
-    for (const file of [...files, "package.json", ".env", ".gitignore"]) {
+    for (const file of [...files, "package.json", ".env", ".gitignore", "AGENTS.md", "CLAUDE.md"]) {
       assert.ok(fs.existsSync(path.join(project, file)), `${file} should exist`);
     }
 
@@ -123,6 +123,21 @@ test("next steps use the package manager that ran the command", (t) => {
 
   const npm = run(["n", "--no-install"], cwd);
   assert.match(npm.out, /npm run dev/);
+});
+
+test("AGENTS.md uses the project's package manager", (t) => {
+  const cwd = tempDir(t);
+  run(["p", "--no-install", "--pm", "pnpm"], cwd);
+  run(["n", "--no-install"], cwd);
+
+  const pnpm = fs.readFileSync(path.join(cwd, "p", "AGENTS.md"), "utf8");
+  assert.match(pnpm, /`pnpm dev`/);
+  assert.match(pnpm, /`pnpm typecheck`/);
+  assert.doesNotMatch(pnpm, /`npm (run |test|start)/);
+
+  const npm = fs.readFileSync(path.join(cwd, "n", "AGENTS.md"), "utf8");
+  assert.match(npm, /`npm run dev`/);
+  assert.match(npm, /`npm test`/);
 });
 
 test("prints the version", () => {
